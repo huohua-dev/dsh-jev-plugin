@@ -14,11 +14,12 @@ from bench.deepswe.config import digest, load
 
 PACKAGE = Path(__file__).resolve().parent
 REPO_ROOT = PACKAGE.parents[1]
-SCENARIOS = ("initial-26", "coding-followup-4", "skill-repository-8")
+SCENARIOS = ("initial-26", "coding-followup-4", "skill-repository-8", "completion-recovery-16")
 TEMPLATES = {
     "initial-26": ("initial-completion.json", "initial-skills.json", "initial-coding.json"),
     "coding-followup-4": ("coding-followup-4.json",),
     "skill-repository-8": ("skill-repository-8.json",),
+    "completion-recovery-16": ("completion-recovery-16.json",),
 }
 
 

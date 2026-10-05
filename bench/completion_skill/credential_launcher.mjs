@@ -51,7 +51,7 @@ async function main(args) {
   }
   const batch = resolve(option(args, '--batch'))
   const scenario = JSON.parse(await readFile(resolve(batch, 'scenario-identity.json'), 'utf8')).scenario_id
-  if (!['initial-26', 'coding-followup-4', 'skill-repository-8'].includes(scenario)) {
+  if (!['initial-26', 'coding-followup-4', 'skill-repository-8', 'completion-recovery-16'].includes(scenario)) {
     throw new Error('Unknown frozen scenario')
   }
   const manifest = scenario === 'initial-26' ? 'skills/manifest.json' : 'manifest.json'
@@ -84,6 +84,8 @@ async function main(args) {
       env[plan.conditions.main_credential_env] ??= 'EVAL_MAIN_PLACEHOLDER'
     } else if (scenario === 'coding-followup-4') {
       env.JEV_CODING_FOLLOWUP_LAUNCHER = '1'
+    } else if (scenario === 'completion-recovery-16') {
+      env.JEV_REC_CREDENTIAL_LAUNCHER = '1'
     } else {
       env.JEV_SF_CREDENTIAL_LAUNCHER = '1'
     }
