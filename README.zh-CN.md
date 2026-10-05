@@ -131,7 +131,7 @@ dsh --profile jev
 ## 行为与限制
 
 - **提醒是建议。** 跑偏和约束提醒不会阻塞、取消工具，也不会强制主模型遵守。
-- **完成核查只审查证据。** 它不会独立运行测试；真实样例曾放行缺乏依据的“没有新增文件”声明。后续长编码试次因默认证据预算裁掉原始要求，Jev回答不可采用并转入人工Retry/Cancel。见[完成核查与技能选择证据](docs/testing/2026-10-02-completion-skill/README.md)，不能将完成核查视为完成保证。
+- **完成核查的固定16槽诊断。** 初始错误由脚本种入，开启组的6/6个错误案例经真实Jev判断和DeepSeek补做满足核心要求；2/2个准确对照判为完成，均无补做。见[新诊断结果](docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md)。完成核查只审查已有证据，不独立运行测试；本诊断不能推出自然任务错误率或编码平均收益。历史长编码试次因默认证据预算裁掉原始要求，判断零采用、零自动补做，最终转入人工Retry/Cancel，见[旧报告](docs/testing/2026-10-02-completion-skill/README.md)。
 - **审批只针对一次操作。** 不改变会话沙箱模式，不覆盖宿主固定检查。有效 approve 可返回 allowed-once，unauthorized 或 unknown 回原人工审批；技术故障保留人工 Retry/Cancel。
 - **共享纠正有明确范围。** 它只处理已经共享的报告和消息，不读取所有 Agent 的内部探索；自动投递限当前存活的主 Agent 及其活跃、可继续的直接子 Agent。同一发现以不同形式上报时，仍可能产生重复纠正。
 - **判断成功不等于执行成功。** 日志分别记录判断、采纳、许可发放和实际操作结果。
@@ -154,7 +154,7 @@ dsh --profile jev
 
 维护者可用 [DeepSWE 配对评测入口](bench/deepswe/README.zh-CN.md)评测编码任务，用 [glob 排序管线](bench/selection/README.zh-CN.md)验证固定路径选择案例。两者采用隔离的 DSH/Pier trial，将模型执行与离线检查、报告分开。[英文评测指南](bench/deepswe/README.md)提供编码任务工作流。
 
-[完成核查与技能评测入口](bench/completion_skill/README.zh-CN.md)提供三个具名场景、显式资源清单、新批次准备、无费预检、收费执行和离线报告。[历史结果](docs/testing/2026-10-02-completion-skill/README.md)与维护入口的验证分开。每次重跑记录脚本提交和源码哈希，依赖及凭据仍需在运行机器上可用。
+[完成核查与技能评测入口](bench/completion_skill/README.zh-CN.md)提供四个具名场景，包括`completion-recovery-16`，以及显式资源清单、新批次准备、无费预检、收费执行和离线报告。[新固定诊断](docs/testing/2026-10-05-completion-recovery/README.md)与[历史结果](docs/testing/2026-10-02-completion-skill/README.md)均和维护入口的验证分开。每次重跑记录脚本提交和源码哈希，依赖及凭据仍需在运行机器上可用。
 
 [公开 glob 实验](docs/testing/2026-10-01-glob-ranking/README.md)记录六类合成案例与12次真实DeepSeek/Jev运行：4次成功Jev判断返回69项分数，0和41候选按规则旁路；报告保留质量负例、恢复检查、源码读取数与费用估算。历史运行使用固定的旧版插件产物，维护中的管线不表示当前main已重跑，也不表示通用任务成功率提高。
 

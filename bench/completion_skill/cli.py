@@ -1,4 +1,4 @@
-"""Portable entry point for the three frozen Jev completion/skill experiments."""
+"""Portable entry point for the frozen Jev completion/skill experiments."""
 
 from __future__ import annotations
 
@@ -44,7 +44,10 @@ def prepare(scenario: str, batch: Path, resource_file: Path) -> dict:
     if image != supplied["image_base"] + "@" + task["image_digest"]:
         raise RuntimeError("Resource Docker image differs from the pinned task")
     install = supplied["resolved_paths"].get("dsh_install")
-    if scenario == "initial-26":
+    if scenario == "completion-recovery-16":
+        from .completion_recovery.prepare import prepare as create
+        result = create(batch, plans[0], image, install)
+    elif scenario == "initial-26":
         from .cs_suite.prepare import prepare as create
         result = create(batch, dict(zip(("completion", "skills", "coding"), plans)), image, install)
     elif scenario == "coding-followup-4":
@@ -77,7 +80,9 @@ def check(batch: Path) -> dict:
                           for name in resources.TEMPLATES[scenario]}
     if identity.get("template_sha256") != expected_templates:
         raise RuntimeError("Scenario template changed")
-    if scenario == "initial-26":
+    if scenario == "completion-recovery-16":
+        from .completion_recovery.runner import check as gate
+    elif scenario == "initial-26":
         from .cs_suite.runner import check as gate
     elif scenario == "coding-followup-4":
         from .coding_followup.runner import check as gate
@@ -92,6 +97,9 @@ def preflight(batch: Path) -> dict:
     """Run published DSH with local scripted providers where a native probe exists."""
     checked = check(batch)
     scenario = checked["scenario_id"]
+    if scenario == "completion-recovery-16":
+        from .completion_recovery.probe import preflight as recovery_probe
+        return recovery_probe(batch)
     if scenario == "initial-26":
         from .cs_suite.completion_probe import probe as completion_probe, verify as completion_verify
         from .skills.native_probe import probe as skills_probe
@@ -109,7 +117,9 @@ def preflight(batch: Path) -> dict:
 
 def report(batch: Path) -> dict:
     scenario = _scenario(Path(batch).resolve())
-    if scenario == "initial-26":
+    if scenario == "completion-recovery-16":
+        from .completion_recovery.runner import report as make
+    elif scenario == "initial-26":
         from .cs_suite.runner import report as make
     elif scenario == "coding-followup-4":
         from .coding_followup.runner import report as make
@@ -120,6 +130,9 @@ def report(batch: Path) -> dict:
 
 def run(batch: Path, *, next_only: bool) -> dict:
     scenario = check(batch)["scenario_id"]
+    if scenario == "completion-recovery-16":
+        from .completion_recovery.runner import run as execute
+        return execute(batch, next_only=next_only)
     if scenario == "initial-26":
         from .cs_suite.runner import run as execute
         return execute(batch, next_only=next_only)

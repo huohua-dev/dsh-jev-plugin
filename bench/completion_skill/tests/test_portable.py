@@ -27,7 +27,7 @@ from bench.completion_skill.skill_followup.runner import redact_output as redact
 
 class PortableSuiteTest(unittest.TestCase):
     def test_scenario_order_and_templates(self) -> None:
-        self.assertEqual(resources.SCENARIOS, ("initial-26", "coding-followup-4", "skill-repository-8"))
+        self.assertEqual(resources.SCENARIOS, ("initial-26", "coding-followup-4", "skill-repository-8", "completion-recovery-16"))
         self.assertEqual(EXPECTED_ORDER, ("baseline", "completion_check", "completion_check", "baseline"))
         self.assertEqual([(row["repeat"], row["condition"]) for row in skill_schedule()[:4]],
                          [(1, "baseline"), (1, "skill_selection"), (2, "skill_selection"), (2, "baseline")])
