@@ -238,6 +238,11 @@ export function apply(ctx: Context, config: Config): void {
     if (!snapshot.complete) return decision
     const skills = snapshot.skills.filter(isModelInvocable)
     if (skills.length === 0) return decision
+    // A ranking cannot omit anything when every skill fits within the limit, so keep the host catalog and skip Jev.
+    if (skills.length <= positive(config.skillLimit.get(), 'skillLimit')) {
+      checkedDirectories.delete(agent)
+      return decision
+    }
     const fullFingerprint = fingerprint(skills.map(({ name, description }) => ({ name, description })))
     const prior = latestSelectedCatalog(agent)
     const checked = checkedDirectories.get(agent)

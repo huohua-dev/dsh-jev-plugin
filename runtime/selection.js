@@ -255,6 +255,10 @@ function apply(ctx, config) {
 		if (!snapshot.complete) return decision;
 		const skills = snapshot.skills.filter(isModelInvocable);
 		if (skills.length === 0) return decision;
+		if (skills.length <= positive(config.skillLimit.get(), "skillLimit")) {
+			checkedDirectories.delete(agent);
+			return decision;
+		}
 		const fullFingerprint = fingerprint(skills.map(({ name, description }) => ({
 			name,
 			description

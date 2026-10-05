@@ -10,6 +10,8 @@ The main model continues to plan, generate answers, and call native tools. The p
 
 This is an independent community project, not an official DeepSeek or Jev release. It is an early-stage plugin tested with **DSH 0.1.7-rc.2**; its APIs and model judgments are not a correctness guarantee.
 
+> **Fork note (huohua-dev):** this fork pins the DSH peers to **0.2.0-rc.2** so the plugin installs on DSH desktop 0.2.0-rc.2 without a compatibility exemption, and Skill selection skips Jev while every model-invocable skill fits within `skillLimit` (the native catalog is published unchanged). Host packages used by Skill selection are byte-identical between 0.1.7-rc.2 and 0.2.0-rc.2; the other features have only been checked by the offline test suite on 0.2.0-rc.2. Install from `https://github.com/huohua-dev/dsh-jev-plugin`.
+
 The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to Jev, and the observed test cases and limits.
 
 ## What is included?
@@ -49,7 +51,7 @@ Each classification covers one complete DSH model step: its recorded reasoning, 
 
 ## Install through the Web UI (recommended)
 
-If you already use **DSH 0.1.7-rc.2 Web**, install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+If you already use **DSH 0.1.7-rc.2 Web** (this fork: **0.2.0-rc.2**), install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
@@ -76,13 +78,13 @@ Use the following steps when modifying or building the plugin yourself. Existing
 
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
-- DeepSeek Harness CLI **0.1.7-rc.2**. The plugin pins the corresponding DSH peers and Cordis **4.0.4**; newer versions are not automatically supported.
+- DeepSeek Harness CLI **0.1.7-rc.2** (this fork: **0.2.0-rc.2**). The plugin pins the corresponding DSH peers and Cordis **4.0.4**; newer versions are not automatically supported.
 - A configured main-model provider in DSH, plus your own Jev-compatible System One endpoint and credentials.
 
 If needed, install the tools:
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.1.7-rc.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.0-rc.2
 ```
 
 ### Build the package

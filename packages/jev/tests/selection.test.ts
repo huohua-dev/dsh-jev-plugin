@@ -108,6 +108,11 @@ async function fixture(counts = { skillLimit: 1, fileCandidates: 40, fileLimit: 
   return { ctx, agent, root, requests, receipts, enabled, judge, settings }
 }
 
+/** Sorts first, so the default fixture ranks it lowest; keeps the directory above skillLimit so Jev runs. */
+function filler(ctx: Context): void {
+  ctx.skills.register({ name: 'aaa-filler', description: 'Filler', source: 'runtime', content: 'Filler body' })
+}
+
 function user(text: string): UserMessage {
   return createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text }] })
 }
@@ -165,6 +170,7 @@ describe('selection hooks through host plugin paths', () => {
 
   it('reselects on directory change, while disabled and no context preserve the host catalog', async () => {
     const { ctx, agent, requests, enabled } = await fixture()
+    filler(ctx)
     ctx.skills.register({ name: 'alpha', description: 'A', source: 'runtime', content: 'body' })
     await step(ctx, agent, [user('Find skill')])
     expect(requests).toHaveLength(1)
@@ -219,6 +225,7 @@ describe('selection hooks through host plugin paths', () => {
 
   it('bounds newest user and visible assistant text to 2000 characters', async () => {
     const { ctx, agent, requests } = await fixture()
+    filler(ctx)
     ctx.skills.register({ name: 'alpha', description: 'A', source: 'runtime', content: 'BODY SECRET' })
     agent.session.append('user/message', user('old-user-' + 'o'.repeat(2_500)), { surfaceOp: 'append' })
     agent.session.append('assistant/message', {
@@ -256,6 +263,7 @@ describe('selection hooks through host plugin paths', () => {
 
   it('keeps explicit user skill invocation on the original loader path', async () => {
     const { ctx, agent, requests } = await fixture()
+    filler(ctx)
     ctx.skills.register({ name: 'alpha', description: 'Alpha', source: 'runtime', content: 'Alpha full instructions' })
     const result = await step(ctx, agent, [user('/alpha use this skill')])
     expect(result.kind).toBe('enter')
@@ -269,6 +277,7 @@ describe('selection hooks through host plugin paths', () => {
     const { ctx, agent, judge, requests } = await fixture({ skillLimit: 2, fileCandidates: 40, fileLimit: 12 })
     ctx.skills.register({ name: 'alpha', description: 'Alpha', source: 'runtime', content: 'Body A' })
     ctx.skills.register({ name: 'beta', description: 'Beta', source: 'runtime', content: 'Body B' })
+    ctx.skills.register({ name: 'zzz-filler', description: 'Filler', source: 'runtime', content: 'Filler body' })
     judge.mockImplementationOnce(async options => {
       const request = await options.refresh(options.signal ?? new AbortController().signal)
       requests.push(request)
@@ -276,6 +285,7 @@ describe('selection hooks through host plugin paths', () => {
         answers: [
           { id: request.questions[0]!.id, kind: 'noul', probability: 0.01, confidence: 0.8 },
           { id: request.questions[1]!.id, kind: 'noul', probability: 0 },
+          { id: request.questions[2]!.id, kind: 'noul', probability: 0 },
         ],
       } }
     })
@@ -395,6 +405,7 @@ describe('selection hooks through host plugin paths', () => {
 
   it('counts only visible native and Jev catalogs, not ordinary mentions, and allows a removed summary again', async () => {
     const { ctx, agent, requests } = await fixture({ skillLimit: 2, fileCandidates: 40, fileLimit: 12 })
+    filler(ctx)
     ctx.skills.register({ name: 'alpha', description: 'Alpha', source: 'runtime', content: 'Body A' })
     ctx.skills.register({ name: 'beta', description: 'Beta', source: 'runtime', content: 'Body B' })
     agent.session.append('user/message', createUserMessage({
@@ -419,6 +430,7 @@ describe('selection hooks through host plugin paths', () => {
 
   it('rebuilds visible-name deduplication for replayed Sessions and isolates a fresh Session', async () => {
     const { ctx, agent, root, requests } = await fixture()
+    filler(ctx)
     ctx.skills.register({ name: 'alpha', description: 'Alpha', source: 'runtime', content: 'Body A' })
     const recorded: SessionEvent[] = []
     await step(ctx, agent, [user('alpha')], recorded)
@@ -442,5 +454,27 @@ describe('selection hooks through host plugin paths', () => {
     expect(freshDecision.kind === 'enter'
       && freshDecision.messages.some(message => message.source.kind === 'jev-skill-catalog')).toBe(true)
     expect(requests).toHaveLength(3)
+  })
+
+  it('keeps the host catalog without Jev while every model-invocable skill fits within skillLimit', async () => {
+    const { ctx, agent, requests, receipts, settings } = await fixture({ skillLimit: 2, fileCandidates: 40, fileLimit: 12 })
+    ctx.skills.register({ name: 'alpha', description: 'Alpha', source: 'runtime', content: 'Body A' })
+    ctx.skills.register({ name: 'beta', description: 'Beta', source: 'runtime', content: 'Body B' })
+    const within = await step(ctx, agent, [user('Use any skill')])
+    const native = within.kind === 'enter' ? within.messages.find(message => message.source.kind === 'skill-catalog') : undefined
+    expect(native?.source.kind === 'skill-catalog' && native.source.entries.map(entry => entry.name)).toEqual(['alpha', 'beta'])
+    expect(within.kind === 'enter' && within.messages.some(message => message.source.kind === 'jev-skill-catalog')).toBe(false)
+    expect(requests).toHaveLength(0)
+    expect(receipts).toHaveLength(0)
+    ctx.skills.register({ name: 'gamma', description: 'Gamma', source: 'runtime', content: 'Body G' })
+    const above = await step(ctx, agent, [user('Another task')])
+    expect(above.kind === 'enter' && above.messages.some(message => message.source.kind === 'skill-catalog')).toBe(false)
+    expect(requests).toHaveLength(1)
+    updateVolatile(settings.skillLimit, createVolatile(3))
+    const raised = await step(ctx, agent, [user('Third task')])
+    const update = raised.kind === 'enter' ? raised.messages.find(message => message.source.kind === 'skill-catalog') : undefined
+    expect(update?.source.kind === 'skill-catalog' && update.source.entries.map(entry => entry.name))
+      .toEqual(['alpha', 'beta', 'gamma'])
+    expect(requests).toHaveLength(1)
   })
 })

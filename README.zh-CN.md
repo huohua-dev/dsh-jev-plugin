@@ -10,6 +10,8 @@
 
 这是独立社区项目，并非 DeepSeek 或 Jev 官方发布。当前属于早期插件，已针对 **DSH 0.1.7-rc.2** 验证；接口和模型判断都不构成正确性保证。
 
+> **Fork 说明（huohua-dev）：** 本 fork 把 DSH peer 依赖固定为 **0.2.0-rc.2**，在 DSH 桌面版 0.2.0-rc.2 上安装无需兼容性豁免；技能选择在可由模型调用的技能数不超过 `skillLimit` 时不调用 Jev，原样发布原生目录。技能选择用到的宿主包在 0.1.7-rc.2 与 0.2.0-rc.2 间完全相同；其他功能在 0.2.0-rc.2 上只经过离线测试。安装地址：`https://github.com/huohua-dev/dsh-jev-plugin`。
+
 [中文功能介绍站](https://luobosibing2.github.io/dsh-jev-plugin/)逐项说明 DSH 原生触发节点、交给 Jev 的信息，以及实际测试场景、结果和边界。
 
 ## 包含哪些功能？
@@ -49,7 +51,7 @@
 
 ## 网页端安装（推荐）
 
-已经在使用 **DSH 0.1.7-rc.2 Web** 的用户，直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
+已经在使用 **DSH 0.1.7-rc.2 Web**（本 fork：**0.2.0-rc.2**）的用户，直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
 
 1. 打开 **侧边栏「插件」→「添加插件」**。
 2. 在 **「包名或地址」** 中粘贴下面的 GitHub 地址，点击 **「安装」**。
@@ -76,13 +78,13 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 - 推荐 Node.js **24.11 或更高版本**；发布构建使用 Node 24.14.1 检查。
 - `PATH` 中可用的 pnpm **11.7.0**。
-- DeepSeek Harness CLI **0.1.7-rc.2**。插件固定使用对应 DSH peer 包和 Cordis **4.0.4**，不自动承诺兼容更新版本。
+- DeepSeek Harness CLI **0.1.7-rc.2**（本 fork：**0.2.0-rc.2**）。插件固定使用对应 DSH peer 包和 Cordis **4.0.4**，不自动承诺兼容更新版本。
 - 在 DSH 中配置好主模型，以及你自己的 Jev 兼容 System One 服务和凭据。
 
 如尚未安装工具：
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.1.7-rc.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.0-rc.2
 ```
 
 ### 构建安装包
