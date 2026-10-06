@@ -41,6 +41,10 @@
 
 **功能分支不等于已合入 main。** 工具输出筛选已进入 `main`；`codex/jev-tool-output-admission` 保留开发快照。原生网页执行在 `codex/jev-native-web-execution`，该方向目前**暂停，普通网站效果未通过验收**。其他历史分支保留早期实现。切换前请看[分支状态](docs/branches.md)，本表始终以 `main` 为准。
 
+## MCP 工具自动选择（功能分支，未合入 `main`）
+
+未合入的 `feat/jev-mcp-selection` 分支新增独立的 **MCP 自动选择** 开关，默认关闭。在 native 工具展示模式下，它请 Jev 判断哪些 `mcp__…` 工具定义与当前用户请求相关，只把这些定义和固定保留的工具名发给主模型。它不安装、启动或连接 MCP 服务，也不修改权限或审批：被隐藏的工具仍保持注册，宿主的守卫与审批照常生效。筛选生效期间，`mcp_catalog` 可列出被省略的工具，`mcp_load` 可按完整名称补载，从下一模型步骤生效。PTC 与 `both` 展示模式保持原样。超时、无效回答等故障时保留原有工具集。预算、概率门槛、是否允许零选、固定保留名单、等待时间和请求大小均可配置。本分支仅经离线测试，未使用收费 Jev 或真实 MCP 服务验证。详见[包参考](packages/jev/README.md#mcp-tool-selection-feature-branch-featjev-mcp-selection)。
+
 ## 阶段导航
 
 网页客户端在“轨迹”后提供独立的**阶段导航**标签页。它读取已记录的轮次，不修改原始 Session。
@@ -180,6 +184,7 @@ pnpm exec vitest run packages/jev/tests/host.test.ts packages/jev/tests/wire.tes
 | 模块 | DSH 扩展点 | 源码 |
 | --- | --- | --- |
 | 技能与文件选择 | `agent/pre-step`、`tools/execute`、`tools/post-execute` | [selection.ts](packages/jev/src/selection.ts) |
+| MCP 工具选择（功能分支） | `system-prompt/assemble`、`agent/inbox/claimed`、`agent/pre-step`、`tools/change` | [mcp-selection.ts](packages/jev/src/mcp-selection.ts) |
 | 监督与约束提醒 | `session/event`、`agent/pre-step`、`agent/turn-stopping`、`tools/pre-execute` | [supervision.ts](packages/jev/src/supervision.ts)、[instructions.ts](packages/jev/src/instructions.ts) |
 | 消息分流与共享纠正 | 原生 Agent inbox、`agent/pre-step`、`tools/result`、子 Agent 消息 | [interjection.ts](packages/jev/src/interjection.ts)、[shared-findings.ts](packages/jev/src/shared-findings.ts) |
 | 工具输出与测试日志筛选 | `tools/post-execute` | [output-admission.ts](packages/jev/src/output-admission.ts) |

@@ -31,7 +31,7 @@ window.__ModuleLoader__.load({
 		react = __toESM(react, 1);
 		let _deepseek_ai_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 		let react_jsx_runtime = require("react/jsx-runtime");
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js
 		function getEnumValues(entries) {
 			const numericValues = Object.values(entries).filter((v) => typeof v === "number");
 			return Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
@@ -570,7 +570,7 @@ window.__ModuleLoader__.load({
 			return fn;
 		}
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/core.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/core.js
 		var _a$1;
 		const _zodDesc = {
 			value: void 0,
@@ -676,7 +676,7 @@ window.__ModuleLoader__.load({
 			return globalConfig;
 		}
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/errors.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/errors.js
 		function _getMessage() {
 			const internals = this._zod;
 			internals.message ?? (internals.message = JSON.stringify(internals.def, jsonStringifyReplacer, 2));
@@ -790,7 +790,7 @@ window.__ModuleLoader__.load({
 			return fieldErrors;
 		}
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/parse.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/parse.js
 		function finalizeParams(callee, params) {
 			return {
 				callee: params?.callee ?? callee,
@@ -993,7 +993,7 @@ window.__ModuleLoader__.load({
 			return _safeParseAsync(_Err)(schema, value, _ctx);
 		};
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js
 		/**
 		* @deprecated CUID v1 is deprecated by its authors due to information leakage
 		* (timestamps embedded in the id). Use {@link cuid2} instead.
@@ -1066,7 +1066,7 @@ window.__ModuleLoader__.load({
 		const lowercase = /^[^A-Z]*$/;
 		const uppercase = /^[^a-z]*$/;
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/checks.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/checks.js
 		const $ZodCheck = /*@__PURE__*/ $constructor("$ZodCheck", (inst, def) => {
 			var _a;
 			inst._zod ?? (inst._zod = {});
@@ -1362,7 +1362,7 @@ window.__ModuleLoader__.load({
 			};
 		});
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/doc.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/doc.js
 		var Doc = class {
 			constructor(args = [], closed = {}) {
 				this.content = [];
@@ -1396,14 +1396,14 @@ window.__ModuleLoader__.load({
 			}
 		};
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/versions.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/versions.js
 		const version = {
 			major: 4,
 			minor: 6,
 			patch: 5
 		};
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/schemas.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/schemas.js
 		const $ZodType = /*@__PURE__*/ $constructor("$ZodType", (inst, def) => {
 			var _a;
 			inst ?? (inst = {});
@@ -2816,7 +2816,7 @@ window.__ModuleLoader__.load({
 			}
 		}
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/memoizer.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/memoizer.js
 		var $ZodCyclicError = class extends Error {
 			constructor() {
 				super(`Cannot parse a reference cycle that closes through a transform`);
@@ -3069,7 +3069,7 @@ window.__ModuleLoader__.load({
 			return backEdges !== void 0 && isRef(value) && backEdges.has(value);
 		}
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/locales/en.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/locales/en.js
 		const error = () => {
 			const Sizable = {
 				string: {
@@ -3177,7 +3177,7 @@ window.__ModuleLoader__.load({
 			return { localeError: error() };
 		}
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/registries.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/registries.js
 		var _a;
 		var $ZodRegistry = class {
 			constructor() {
@@ -3224,7 +3224,7 @@ window.__ModuleLoader__.load({
 		(_a = globalThis).__zod_globalRegistry ?? (_a.__zod_globalRegistry = registry());
 		const globalRegistry = globalThis.__zod_globalRegistry;
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/api.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/api.js
 		function snapshotChecks(def) {
 			if (def.checks) def.checks = [...def.checks];
 			return def;
@@ -3747,7 +3747,7 @@ window.__ModuleLoader__.load({
 			return ch;
 		}
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/to-json-schema.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/to-json-schema.js
 		function assignProps(target, ...sources) {
 			for (const source of sources) for (const key of Reflect.ownKeys(source)) if (Object.prototype.propertyIsEnumerable.call(source, key)) assignProp(target, key, source[key]);
 			return target;
@@ -4189,7 +4189,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			return finalize(ctx, schema);
 		};
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/json-schema-processors.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/json-schema-processors.js
 		const narrowMin = (agg, key, value) => {
 			if (agg[key] === void 0 || value > agg[key]) agg[key] = value;
 		};
@@ -4647,7 +4647,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			seen.ref = innerType;
 		};
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/errors.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/errors.js
 		const _installedErrorProtos = /* @__PURE__ */ new WeakSet([Object.prototype, Error.prototype]);
 		function _lazyMethod(proto, key, make) {
 			Object.defineProperty(proto, key, {
@@ -4697,7 +4697,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		};
 		const ZodRealError = /*@__PURE__*/ $constructor("ZodError", initializer, void 0, { Parent: Error });
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/parse.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/parse.js
 		const parse = /* @__PURE__ */ _parse(ZodRealError);
 		const parseAsync = /* @__PURE__ */ _parseAsync(ZodRealError);
 		const safeParse = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -4711,7 +4711,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 		const safeEncodeAsync = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 		const safeDecodeAsync = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 		//#endregion
-		//#region ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/schemas.js
+		//#region ../../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/schemas.js
 		function _ensureDefaultLocale() {
 			if (!globalConfig.localeError) config(en_default());
 		}
@@ -7036,56 +7036,350 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			]
 		};
 		//#endregion
+		//#region src/mcp-selection-types.ts
+		/** Naming convention only, never an authenticated server/raw-tool identity. */
+		const MCP_PUBLIC_NAME_PATTERN = /^(?=.{1,64}$)mcp__[A-Za-z0-9_-]+__[A-Za-z0-9_-]+$/;
+		function isMcpPublicName(name) {
+			return MCP_PUBLIC_NAME_PATTERN.test(name);
+		}
+		//#endregion
 //#region jev-css:JevPage.module.css
 		const tag$1 = "@dsh-jev/plugin/src/client/JevPage.module.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tag$1) + "]") === null) {
 			const element = document.createElement("style");
 			element.dataset.plugin = "@dsh-jev/plugin";
 			element.dataset.pluginCss = tag$1;
-			element.textContent = ".Bw2nmW_page{min-width:0;color:var(--dsw-alias-label-primary);flex-direction:column;gap:24px;padding:12px 0 24px;font-size:13px;line-height:20px;display:flex}.Bw2nmW_tabs{max-width:420px}.Bw2nmW_panel,.Bw2nmW_section,.Bw2nmW_form,.Bw2nmW_list,.Bw2nmW_record,.Bw2nmW_detail,.Bw2nmW_featureBody{flex-direction:column;display:flex}.Bw2nmW_panel{gap:24px}.Bw2nmW_section{gap:12px}.Bw2nmW_form{gap:14px}.Bw2nmW_list,.Bw2nmW_record{gap:8px}.Bw2nmW_detail{gap:12px}.Bw2nmW_featureBody{gap:2px;min-width:0}.Bw2nmW_heading{margin:0;font-size:14px;font-weight:500;line-height:22px}.Bw2nmW_row,.Bw2nmW_toolbar,.Bw2nmW_feature,.Bw2nmW_recordHead,.Bw2nmW_filters,.Bw2nmW_actions{align-items:center;gap:12px;display:flex}.Bw2nmW_feature,.Bw2nmW_recordHead{justify-content:space-between}.Bw2nmW_feature,.Bw2nmW_record{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);padding:12px}.Bw2nmW_featureTitle{font-weight:500}.Bw2nmW_description,.Bw2nmW_hint,.Bw2nmW_meta,.Bw2nmW_empty{color:var(--dsw-alias-label-secondary)}.Bw2nmW_description,.Bw2nmW_hint,.Bw2nmW_meta,.Bw2nmW_empty,.Bw2nmW_notice{margin:0}.Bw2nmW_hint{font-size:12px}.Bw2nmW_empty{padding:12px 0}.Bw2nmW_loading{justify-content:center;align-items:center;min-height:80px;display:flex}.Bw2nmW_toolbar,.Bw2nmW_actions{flex-wrap:wrap}.Bw2nmW_filters{flex-wrap:wrap;align-items:end}.Bw2nmW_field{flex-direction:column;flex:160px;gap:6px;min-width:0;display:flex}.Bw2nmW_field>span:first-child,.Bw2nmW_field>label{font-weight:500}.Bw2nmW_field input,.Bw2nmW_field select{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:100%;min-height:36px;color:var(--dsw-alias-label-primary);font:inherit;padding:6px 10px}.Bw2nmW_field input:focus-visible,.Bw2nmW_field select:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:1px}.Bw2nmW_field input[aria-invalid=true]{border-color:var(--dsw-alias-state-error-primary)}.Bw2nmW_notice{color:var(--dsw-alias-state-error-primary);font-size:13px}.Bw2nmW_success{color:var(--dsw-alias-state-success-primary)}.Bw2nmW_code{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:10px;font-size:12px;line-height:18px;overflow:auto}.Bw2nmW_detailBlock{flex-direction:column;gap:6px;display:flex}.Bw2nmW_detailLabel{font-weight:500}@media (width<=600px){.Bw2nmW_feature,.Bw2nmW_recordHead{flex-direction:column;align-items:flex-start}.Bw2nmW_filters>.Bw2nmW_field{flex-basis:100%}}";
+			element.textContent = ".zAsr4a_page{min-width:0;color:var(--dsw-alias-label-primary);flex-direction:column;gap:24px;padding:12px 0 24px;font-size:13px;line-height:20px;display:flex}.zAsr4a_tabs{max-width:420px}.zAsr4a_panel,.zAsr4a_section,.zAsr4a_form,.zAsr4a_list,.zAsr4a_record,.zAsr4a_detail,.zAsr4a_featureBody{flex-direction:column;display:flex}.zAsr4a_panel{gap:24px}.zAsr4a_section{gap:12px}.zAsr4a_form{gap:14px}.zAsr4a_list,.zAsr4a_record{gap:8px}.zAsr4a_detail{gap:12px}.zAsr4a_featureBody{gap:2px;min-width:0}.zAsr4a_heading{margin:0;font-size:14px;font-weight:500;line-height:22px}.zAsr4a_row,.zAsr4a_toolbar,.zAsr4a_feature,.zAsr4a_recordHead,.zAsr4a_filters,.zAsr4a_actions{align-items:center;gap:12px;display:flex}.zAsr4a_feature,.zAsr4a_recordHead{justify-content:space-between}.zAsr4a_feature,.zAsr4a_record{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);padding:12px}.zAsr4a_featureTitle{font-weight:500}.zAsr4a_description,.zAsr4a_hint,.zAsr4a_meta,.zAsr4a_empty{color:var(--dsw-alias-label-secondary)}.zAsr4a_description,.zAsr4a_hint,.zAsr4a_meta,.zAsr4a_empty,.zAsr4a_notice{margin:0}.zAsr4a_hint{font-size:12px}.zAsr4a_empty{padding:12px 0}.zAsr4a_loading{justify-content:center;align-items:center;min-height:80px;display:flex}.zAsr4a_toolbar,.zAsr4a_actions{flex-wrap:wrap}.zAsr4a_filters{flex-wrap:wrap;align-items:end}.zAsr4a_field{flex-direction:column;flex:160px;gap:6px;min-width:0;display:flex}.zAsr4a_field>span:first-child,.zAsr4a_field>label{font-weight:500}.zAsr4a_field input,.zAsr4a_field select{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:100%;min-height:36px;color:var(--dsw-alias-label-primary);font:inherit;padding:6px 10px}.zAsr4a_field input:focus-visible,.zAsr4a_field select:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:1px}.zAsr4a_field input[aria-invalid=true]{border-color:var(--dsw-alias-state-error-primary)}.zAsr4a_notice{color:var(--dsw-alias-state-error-primary);font-size:13px}.zAsr4a_success{color:var(--dsw-alias-state-success-primary)}.zAsr4a_code{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:10px;font-size:12px;line-height:18px;overflow:auto}.zAsr4a_detailBlock{flex-direction:column;gap:6px;display:flex}.zAsr4a_detailLabel{font-weight:500}@media (width<=600px){.zAsr4a_feature,.zAsr4a_recordHead{flex-direction:column;align-items:flex-start}.zAsr4a_filters>.zAsr4a_field{flex-basis:100%}}";
 			document.head.appendChild(element);
 		}
 		var JevPage_module_css_default = {
-			"featureBody": "Bw2nmW_featureBody",
-			"filters": "Bw2nmW_filters",
-			"panel": "Bw2nmW_panel",
-			"form": "Bw2nmW_form",
-			"list": "Bw2nmW_list",
-			"page": "Bw2nmW_page",
-			"tabs": "Bw2nmW_tabs",
-			"record": "Bw2nmW_record",
-			"heading": "Bw2nmW_heading",
-			"actions": "Bw2nmW_actions",
-			"hint": "Bw2nmW_hint",
-			"notice": "Bw2nmW_notice",
-			"loading": "Bw2nmW_loading",
-			"row": "Bw2nmW_row",
-			"detailBlock": "Bw2nmW_detailBlock",
-			"detailLabel": "Bw2nmW_detailLabel",
-			"section": "Bw2nmW_section",
-			"featureTitle": "Bw2nmW_featureTitle",
-			"description": "Bw2nmW_description",
-			"detail": "Bw2nmW_detail",
-			"toolbar": "Bw2nmW_toolbar",
-			"feature": "Bw2nmW_feature",
-			"meta": "Bw2nmW_meta",
-			"recordHead": "Bw2nmW_recordHead",
-			"empty": "Bw2nmW_empty",
-			"field": "Bw2nmW_field",
-			"code": "Bw2nmW_code",
-			"success": "Bw2nmW_success"
+			"filters": "zAsr4a_filters",
+			"record": "zAsr4a_record",
+			"loading": "zAsr4a_loading",
+			"detail": "zAsr4a_detail",
+			"description": "zAsr4a_description",
+			"success": "zAsr4a_success",
+			"detailLabel": "zAsr4a_detailLabel",
+			"tabs": "zAsr4a_tabs",
+			"row": "zAsr4a_row",
+			"page": "zAsr4a_page",
+			"feature": "zAsr4a_feature",
+			"section": "zAsr4a_section",
+			"heading": "zAsr4a_heading",
+			"panel": "zAsr4a_panel",
+			"recordHead": "zAsr4a_recordHead",
+			"featureTitle": "zAsr4a_featureTitle",
+			"featureBody": "zAsr4a_featureBody",
+			"form": "zAsr4a_form",
+			"meta": "zAsr4a_meta",
+			"empty": "zAsr4a_empty",
+			"notice": "zAsr4a_notice",
+			"field": "zAsr4a_field",
+			"detailBlock": "zAsr4a_detailBlock",
+			"actions": "zAsr4a_actions",
+			"list": "zAsr4a_list",
+			"hint": "zAsr4a_hint",
+			"toolbar": "zAsr4a_toolbar",
+			"code": "zAsr4a_code"
 		};
+		//#endregion
+		//#region src/client/McpSelectionSettings.tsx
+		/** Profile-scoped native MCP definition selection; saving never enables the feature. */
+		const FIELDS = [
+			{
+				key: "toolLimit",
+				label: "mcpToolLimit",
+				error: "mcpToolLimitInvalid",
+				min: 0,
+				max: 1e3
+			},
+			{
+				key: "minProbability",
+				label: "mcpMinProbability",
+				error: "mcpProbabilityInvalid",
+				min: 0,
+				max: 1,
+				ratio: true
+			},
+			{
+				key: "waitMs",
+				label: "mcpWaitMs",
+				error: "mcpWaitInvalid",
+				min: 1,
+				max: 3e5
+			},
+			{
+				key: "maxRequestChars",
+				label: "mcpMaxRequestChars",
+				error: "mcpRequestInvalid",
+				min: 2048,
+				max: 1e6
+			}
+		];
+		function toDraft(value) {
+			return {
+				toolLimit: String(value.toolLimit),
+				minProbability: String(value.minProbability),
+				waitMs: String(value.waitMs),
+				maxRequestChars: String(value.maxRequestChars),
+				allowZero: value.allowZero,
+				pinnedTools: value.pinnedTools.join("\n")
+			};
+		}
+		/** Render the independent MCP configuration using the incumbent settings controls. */
+		function McpSelectionSettings({ form, notifySuccess, t }) {
+			const subscribe = (0, react.useCallback)((listener) => form.subscribe(listener), [form]);
+			const getSnapshot = (0, react.useCallback)(() => form.getSnapshot(), [form]);
+			const snapshot = (0, react.useSyncExternalStore)(subscribe, getSnapshot, getSnapshot);
+			const [draft, setDraft] = (0, react.useState)(null);
+			const [invalid, setInvalid] = (0, react.useState)({});
+			const [saving, setSaving] = (0, react.useState)(false);
+			const [saveError, setSaveError] = (0, react.useState)(false);
+			const edited = (0, react.useRef)(false);
+			const pending = (0, react.useRef)(false);
+			const current = snapshot.value;
+			(0, react.useEffect)(() => {
+				if (current !== void 0 && !edited.current) setDraft(toDraft(current));
+			}, [current]);
+			const values = draft ?? (current === void 0 ? null : toDraft(current));
+			const dirty = current !== void 0 && values !== null && JSON.stringify(values) !== JSON.stringify(toDraft(current));
+			(0, react.useEffect)(() => {
+				if (!dirty) edited.current = false;
+			}, [dirty]);
+			const disabled = !snapshot.writable || snapshot.status !== "ready" || saving;
+			const edit = (key, value) => {
+				if (values === null) return;
+				edited.current = true;
+				setDraft({
+					...values,
+					[key]: value
+				});
+				setInvalid((previous) => {
+					const next = { ...previous };
+					delete next[key];
+					if (key === "toolLimit") delete next.allowZero;
+					return next;
+				});
+				setSaveError(false);
+			};
+			const save = async () => {
+				if (values === null || disabled || !dirty || pending.current) return;
+				const errors = {};
+				const numeric = {};
+				for (const { key, min, max, ratio, error } of FIELDS) {
+					const raw = values[key];
+					const value = Number(raw);
+					if (raw.trim() === "" || !Number.isFinite(value) || value < min || value > max || !ratio && (!/^\d+$/.test(raw) || !Number.isSafeInteger(value))) errors[key] = error;
+					else numeric[key] = value;
+				}
+				const pinnedTools = [...new Set(values.pinnedTools.split(/\r?\n/).map((name) => name.trim()).filter(Boolean))];
+				if (pinnedTools.some((name) => !isMcpPublicName(name))) errors.pinnedTools = "mcpPinsInvalid";
+				if (numeric.toolLimit === 0 && !values.allowZero) errors.allowZero = "mcpZeroInvalid";
+				setInvalid(errors);
+				if (Object.keys(errors).length) return;
+				pending.current = true;
+				setSaving(true);
+				setSaveError(false);
+				try {
+					if (!await form.mutate([
+						...FIELDS.map(({ key }) => ({
+							op: "set",
+							path: [key],
+							value: numeric[key]
+						})),
+						{
+							op: "set",
+							path: ["allowZero"],
+							value: values.allowZero
+						},
+						{
+							op: "set",
+							path: ["pinnedTools"],
+							value: pinnedTools
+						}
+					], snapshot.revision)) setSaveError(true);
+					else {
+						edited.current = false;
+						const saved = form.getSnapshot().value;
+						if (saved !== void 0) setDraft(toDraft(saved));
+						notifySuccess(t("mcpSelectionSaved"));
+					}
+				} catch {
+					setSaveError(true);
+				} finally {
+					pending.current = false;
+					setSaving(false);
+				}
+			};
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: JevPage_module_css_default.section,
+				"aria-label": t("mcpSelectionSettings"),
+				children: [
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
+						className: JevPage_module_css_default.heading,
+						children: t("mcpSelectionSettings")
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+						className: JevPage_module_css_default.hint,
+						children: t("mcpSelectionHint")
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+						className: JevPage_module_css_default.hint,
+						id: "jev-mcp-budget-hint",
+						children: t("mcpSelectionBudgetHint")
+					}),
+					snapshot.status === "loading" && current === void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+						className: JevPage_module_css_default.loading,
+						role: "status",
+						"aria-label": t("loading"),
+						children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.StateDot, {
+							state: "ongoing",
+							size: 24
+						})
+					}),
+					snapshot.status === "unavailable" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+						className: JevPage_module_css_default.notice,
+						children: t("unavailable")
+					}),
+					current !== void 0 && values !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: JevPage_module_css_default.form,
+						"aria-busy": saving,
+						children: [
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: JevPage_module_css_default.filters,
+								children: FIELDS.map(({ key, label, min, max, ratio }) => /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: JevPage_module_css_default.field,
+									children: [
+										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("label", {
+											htmlFor: `jev-mcp-${key}`,
+											children: t(label)
+										}),
+										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+											id: `jev-mcp-${key}`,
+											type: "number",
+											min,
+											max,
+											step: ratio ? "any" : "1",
+											value: values[key],
+											disabled,
+											"aria-invalid": Boolean(invalid[key]) || void 0,
+											"aria-describedby": invalid[key] ? `jev-mcp-${key}-error` : key === "toolLimit" ? "jev-mcp-budget-hint" : void 0,
+											onChange: (event) => {
+												edit(key, event.target.value);
+											}
+										}),
+										invalid[key] && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											id: `jev-mcp-${key}-error`,
+											role: "alert",
+											className: JevPage_module_css_default.notice,
+											children: t(invalid[key])
+										})
+									]
+								}, key))
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+								className: JevPage_module_css_default.row,
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Switch, {
+									label: t("mcpAllowZero"),
+									checked: values.allowZero,
+									disabled,
+									onChange: (value) => {
+										edit("allowZero", value);
+									}
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("mcpAllowZero") })]
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: JevPage_module_css_default.hint,
+								children: t("mcpAllowZeroHint")
+							}),
+							invalid.allowZero && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								role: "alert",
+								className: JevPage_module_css_default.notice,
+								children: t(invalid.allowZero)
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: JevPage_module_css_default.filters,
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: JevPage_module_css_default.field,
+									children: [
+										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("label", {
+											htmlFor: "jev-mcp-pinnedTools",
+											children: t("mcpPinnedTools")
+										}),
+										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("textarea", {
+											id: "jev-mcp-pinnedTools",
+											rows: 4,
+											value: values.pinnedTools,
+											disabled,
+											"aria-invalid": Boolean(invalid.pinnedTools) || void 0,
+											"aria-describedby": `jev-mcp-pins-hint${invalid.pinnedTools ? " jev-mcp-pins-error" : ""}`,
+											onChange: (event) => {
+												edit("pinnedTools", event.target.value);
+											},
+											style: {
+												width: "100%",
+												boxSizing: "border-box",
+												minHeight: 96,
+												padding: "6px 10px",
+												border: `1px solid var(${invalid.pinnedTools ? "--dsw-alias-state-error-primary" : "--dsw-alias-border-l3"})`,
+												borderRadius: "var(--dsw-radius-sm)",
+												background: "var(--dsw-alias-bg-layer-2)",
+												color: "var(--dsw-alias-label-primary)",
+												font: "inherit",
+												resize: "vertical"
+											}
+										}),
+										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+											id: "jev-mcp-pins-hint",
+											className: JevPage_module_css_default.hint,
+											children: t("mcpPinnedToolsHint")
+										}),
+										invalid.pinnedTools && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											id: "jev-mcp-pins-error",
+											role: "alert",
+											className: JevPage_module_css_default.notice,
+											children: t(invalid.pinnedTools)
+										})
+									]
+								})
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+								className: JevPage_module_css_default.actions,
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+									variant: "primary",
+									disabled: disabled || !dirty,
+									onClick: () => {
+										save();
+									},
+									children: saving ? t("saving") : t("saveMcpSelection")
+								}), !snapshot.writable && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+									className: JevPage_module_css_default.hint,
+									children: t("readOnly")
+								})]
+							}),
+							saveError && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								role: "alert",
+								className: JevPage_module_css_default.notice,
+								children: t("mcpSelectionSaveFailed")
+							})
+						]
+					})
+				]
+			});
+		}
 		//#endregion
 		//#region src/client/JevPage.tsx
 		/** Jev bundle settings, feature catalogue, and bounded decision-record browser. */
 		function featureName(feature, t) {
 			if (feature.id === "shared-findings") return t("sharedFindingsName");
 			if (feature.id === "stage-navigation") return t("stageNavigationName");
+			if (feature.id === "mcp-selection") return t("mcpSelectionName");
 			return feature.name;
 		}
 		function featureDescription(feature, t) {
 			if (feature.id === "shared-findings") return t("sharedFindingsDescription");
 			if (feature.id === "stage-navigation") return t("stageNavigationDescription");
+			if (feature.id === "mcp-selection") return t("mcpSelectionDescription");
 			return feature.description;
 		}
 		function recordFeatureName(features, featureId, t) {
@@ -7187,6 +7481,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 						}),
 						props.selectionForm && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(SelectionSettings, {
 							form: props.selectionForm,
+							notifySuccess: props.notifySuccess,
+							t
+						}),
+						props.mcpSelectionForm && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(McpSelectionSettings, {
+							form: props.mcpSelectionForm,
 							notifySuccess: props.notifySuccess,
 							t
 						}),
@@ -8739,56 +9038,56 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const element = document.createElement("style");
 			element.dataset.plugin = "@dsh-jev/plugin";
 			element.dataset.pluginCss = tag;
-			element.textContent = ".ZQRolG_page{width:100%;height:calc(var(--dsh-conversation-viewport-height,100dvh) - var(--dsh-composer-height,152px));box-sizing:border-box;min-width:0;min-height:0;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1);flex-direction:column;font-size:13px;line-height:20px;display:flex;overflow:hidden}.ZQRolG_toolbar{border-bottom:1px solid var(--dsw-alias-border-l3);flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 20px;display:flex}.ZQRolG_toolbar h2,.ZQRolG_navigation h3,.ZQRolG_reader h3,.ZQRolG_reader h4,.ZQRolG_toolSection h4{margin:0;font-size:14px;font-weight:500;line-height:22px}.ZQRolG_toolbarActions{flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;display:flex}.ZQRolG_scopeHint{color:var(--dsw-alias-label-secondary);flex-basis:100%;margin:0;font-size:12px}.ZQRolG_notice,.ZQRolG_progress,.ZQRolG_error{margin:0;font-size:12px}.ZQRolG_notice,.ZQRolG_progress{color:var(--dsw-alias-label-secondary)}.ZQRolG_error{color:var(--dsw-alias-state-error-primary)}.ZQRolG_mobileToggle{display:none}.ZQRolG_layout{flex:1;grid-template-columns:minmax(230px,275px) minmax(0,1fr);min-height:0;display:grid;overflow:hidden}.ZQRolG_navigation,.ZQRolG_reader{overscroll-behavior:contain;scrollbar-gutter:stable;min-height:0;overflow:auto}.ZQRolG_navigation{border-right:1px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-layer-2);padding:16px 12px 24px}.ZQRolG_navigation h3{padding:0 7px 12px}.ZQRolG_turnItem{margin-bottom:10px}.ZQRolG_turnButton,.ZQRolG_segmentButton,.ZQRolG_gapButton{border-radius:var(--dsw-radius-sm);width:100%;color:var(--dsw-alias-label-primary);text-align:left;font:inherit;cursor:pointer;background:0 0;border:1px solid #0000;flex-direction:column;align-items:flex-start;gap:3px;display:flex}.ZQRolG_turnButton{padding:8px}.ZQRolG_turnButton>span{-webkit-line-clamp:2;overflow-wrap:anywhere;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.ZQRolG_turnButton small,.ZQRolG_segmentButton small,.ZQRolG_gapButton small{color:var(--dsw-alias-label-secondary);font-size:12px}.ZQRolG_activeTurn,.ZQRolG_activeSegment{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-border-l3)}.ZQRolG_segments{border-left:1px solid var(--dsw-alias-border-l3);margin-left:13px;padding-left:8px}.ZQRolG_segmentButton,.ZQRolG_gapButton{margin:3px 0;padding:6px 8px}.ZQRolG_segmentButton{border-left:2px solid var(--dsw-alias-state-business-primary)}.ZQRolG_gapButton{color:var(--dsw-alias-label-secondary)}.ZQRolG_turnButton:hover,.ZQRolG_segmentButton:hover,.ZQRolG_gapButton:hover{background:var(--dsw-alias-bg-layer-1)}.ZQRolG_reader{padding:18px 22px 32px}.ZQRolG_readerInner{width:100%;max-width:1120px;margin:0 auto}.ZQRolG_readerHeader,.ZQRolG_readerHeading,.ZQRolG_stepHead,.ZQRolG_statusLine{flex-wrap:wrap;align-items:baseline;gap:7px 14px;display:flex}.ZQRolG_readerHeader{justify-content:space-between;margin-bottom:14px}.ZQRolG_readerHeading{justify-content:space-between;margin:20px 0 10px}.ZQRolG_request{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);padding:12px 14px}.ZQRolG_request h4{margin-bottom:8px}.ZQRolG_request details{margin-top:8px}.ZQRolG_search{color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;display:flex}.ZQRolG_search input{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:220px;min-width:0;min-height:34px;color:var(--dsw-alias-label-primary);font:inherit;padding:5px 8px}.ZQRolG_textButton{color:var(--dsw-alias-state-business-primary);font:inherit;cursor:pointer;background:0 0;border:0;padding:2px 0}.ZQRolG_stepCard{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);margin:10px 0;padding:13px 14px}.ZQRolG_inSegment{border-left:3px solid var(--dsw-alias-state-business-primary)}.ZQRolG_focused{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.ZQRolG_stepHead{margin-bottom:5px}.ZQRolG_stepNumber{font-weight:500}.ZQRolG_stageLabel{color:var(--dsw-alias-state-business-primary)}.ZQRolG_statusLine{margin:6px 0;font-size:12px}.ZQRolG_muted{color:var(--dsw-alias-label-secondary)}.ZQRolG_blocks{flex-direction:column;gap:6px;margin:12px 0;display:flex}.ZQRolG_message{border-top:1px solid var(--dsw-alias-border-l3);padding:8px 0}.ZQRolG_block,.ZQRolG_tool{min-width:0}.ZQRolG_blockLabel{margin:8px 0 5px;font-weight:500;display:block}.ZQRolG_sourceText{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0;font:12px/18px ui-monospace,SFMono-Regular,monospace}.ZQRolG_block>.ZQRolG_sourceText,.ZQRolG_block>details .ZQRolG_sourceText,.ZQRolG_toolBody .ZQRolG_sourceText,.ZQRolG_detailPanel .ZQRolG_sourceText{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);padding:9px}.ZQRolG_toolSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:13px;padding-top:11px}.ZQRolG_toolSection h4{font-size:13px}.ZQRolG_tool{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);margin-top:7px;padding:7px 9px}.ZQRolG_tool summary{flex-wrap:wrap;gap:12px;display:flex}.ZQRolG_toolBody{padding-top:8px}.ZQRolG_analysisSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:12px;padding-top:9px}.ZQRolG_previousResult{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex-wrap:wrap;gap:4px 12px;margin-top:9px;padding:9px;font-size:12px;display:flex}.ZQRolG_detailPanel{padding-top:8px}.ZQRolG_empty{color:var(--dsw-alias-label-secondary);text-align:center;padding:30px 15px}.ZQRolG_loading{flex:1;justify-content:center;align-items:center;display:flex}.ZQRolG_page button:focus-visible,.ZQRolG_page input:focus-visible,.ZQRolG_page summary:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}@media (width<=760px){.ZQRolG_toolbar{padding:10px 14px}.ZQRolG_mobileToggle{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);font:inherit;cursor:pointer;padding:5px 8px;display:inline-block}.ZQRolG_layout{flex-direction:column;display:flex}.ZQRolG_navigation{border-right:0;border-bottom:1px solid var(--dsw-alias-border-l3);flex:none;max-height:34%;padding:12px 12px 18px}.ZQRolG_navigationClosed{display:none}.ZQRolG_reader{flex:1;padding:14px 14px 22px}.ZQRolG_search{width:100%}.ZQRolG_search input{flex:1;width:auto}}";
+			element.textContent = ".iSWeNq_page{width:100%;height:calc(var(--dsh-conversation-viewport-height,100dvh) - var(--dsh-composer-height,152px));box-sizing:border-box;min-width:0;min-height:0;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1);flex-direction:column;font-size:13px;line-height:20px;display:flex;overflow:hidden}.iSWeNq_toolbar{border-bottom:1px solid var(--dsw-alias-border-l3);flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 20px;display:flex}.iSWeNq_toolbar h2,.iSWeNq_navigation h3,.iSWeNq_reader h3,.iSWeNq_reader h4,.iSWeNq_toolSection h4{margin:0;font-size:14px;font-weight:500;line-height:22px}.iSWeNq_toolbarActions{flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;display:flex}.iSWeNq_scopeHint{color:var(--dsw-alias-label-secondary);flex-basis:100%;margin:0;font-size:12px}.iSWeNq_notice,.iSWeNq_progress,.iSWeNq_error{margin:0;font-size:12px}.iSWeNq_notice,.iSWeNq_progress{color:var(--dsw-alias-label-secondary)}.iSWeNq_error{color:var(--dsw-alias-state-error-primary)}.iSWeNq_mobileToggle{display:none}.iSWeNq_layout{flex:1;grid-template-columns:minmax(230px,275px) minmax(0,1fr);min-height:0;display:grid;overflow:hidden}.iSWeNq_navigation,.iSWeNq_reader{overscroll-behavior:contain;scrollbar-gutter:stable;min-height:0;overflow:auto}.iSWeNq_navigation{border-right:1px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-layer-2);padding:16px 12px 24px}.iSWeNq_navigation h3{padding:0 7px 12px}.iSWeNq_turnItem{margin-bottom:10px}.iSWeNq_turnButton,.iSWeNq_segmentButton,.iSWeNq_gapButton{border-radius:var(--dsw-radius-sm);width:100%;color:var(--dsw-alias-label-primary);text-align:left;font:inherit;cursor:pointer;background:0 0;border:1px solid #0000;flex-direction:column;align-items:flex-start;gap:3px;display:flex}.iSWeNq_turnButton{padding:8px}.iSWeNq_turnButton>span{-webkit-line-clamp:2;overflow-wrap:anywhere;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.iSWeNq_turnButton small,.iSWeNq_segmentButton small,.iSWeNq_gapButton small{color:var(--dsw-alias-label-secondary);font-size:12px}.iSWeNq_activeTurn,.iSWeNq_activeSegment{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-border-l3)}.iSWeNq_segments{border-left:1px solid var(--dsw-alias-border-l3);margin-left:13px;padding-left:8px}.iSWeNq_segmentButton,.iSWeNq_gapButton{margin:3px 0;padding:6px 8px}.iSWeNq_segmentButton{border-left:2px solid var(--dsw-alias-state-business-primary)}.iSWeNq_gapButton{color:var(--dsw-alias-label-secondary)}.iSWeNq_turnButton:hover,.iSWeNq_segmentButton:hover,.iSWeNq_gapButton:hover{background:var(--dsw-alias-bg-layer-1)}.iSWeNq_reader{padding:18px 22px 32px}.iSWeNq_readerInner{width:100%;max-width:1120px;margin:0 auto}.iSWeNq_readerHeader,.iSWeNq_readerHeading,.iSWeNq_stepHead,.iSWeNq_statusLine{flex-wrap:wrap;align-items:baseline;gap:7px 14px;display:flex}.iSWeNq_readerHeader{justify-content:space-between;margin-bottom:14px}.iSWeNq_readerHeading{justify-content:space-between;margin:20px 0 10px}.iSWeNq_request{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);padding:12px 14px}.iSWeNq_request h4{margin-bottom:8px}.iSWeNq_request details{margin-top:8px}.iSWeNq_search{color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;display:flex}.iSWeNq_search input{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-2);width:220px;min-width:0;min-height:34px;color:var(--dsw-alias-label-primary);font:inherit;padding:5px 8px}.iSWeNq_textButton{color:var(--dsw-alias-state-business-primary);font:inherit;cursor:pointer;background:0 0;border:0;padding:2px 0}.iSWeNq_stepCard{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);margin:10px 0;padding:13px 14px}.iSWeNq_inSegment{border-left:3px solid var(--dsw-alias-state-business-primary)}.iSWeNq_focused{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.iSWeNq_stepHead{margin-bottom:5px}.iSWeNq_stepNumber{font-weight:500}.iSWeNq_stageLabel{color:var(--dsw-alias-state-business-primary)}.iSWeNq_statusLine{margin:6px 0;font-size:12px}.iSWeNq_muted{color:var(--dsw-alias-label-secondary)}.iSWeNq_blocks{flex-direction:column;gap:6px;margin:12px 0;display:flex}.iSWeNq_message{border-top:1px solid var(--dsw-alias-border-l3);padding:8px 0}.iSWeNq_block,.iSWeNq_tool{min-width:0}.iSWeNq_blockLabel{margin:8px 0 5px;font-weight:500;display:block}.iSWeNq_sourceText{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0;font:12px/18px ui-monospace,SFMono-Regular,monospace}.iSWeNq_block>.iSWeNq_sourceText,.iSWeNq_block>details .iSWeNq_sourceText,.iSWeNq_toolBody .iSWeNq_sourceText,.iSWeNq_detailPanel .iSWeNq_sourceText{border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);padding:9px}.iSWeNq_toolSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:13px;padding-top:11px}.iSWeNq_toolSection h4{font-size:13px}.iSWeNq_tool{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);margin-top:7px;padding:7px 9px}.iSWeNq_tool summary{flex-wrap:wrap;gap:12px;display:flex}.iSWeNq_toolBody{padding-top:8px}.iSWeNq_analysisSection{border-top:1px solid var(--dsw-alias-border-l3);margin-top:12px;padding-top:9px}.iSWeNq_previousResult{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex-wrap:wrap;gap:4px 12px;margin-top:9px;padding:9px;font-size:12px;display:flex}.iSWeNq_detailPanel{padding-top:8px}.iSWeNq_empty{color:var(--dsw-alias-label-secondary);text-align:center;padding:30px 15px}.iSWeNq_loading{flex:1;justify-content:center;align-items:center;display:flex}.iSWeNq_page button:focus-visible,.iSWeNq_page input:focus-visible,.iSWeNq_page summary:focus-visible{outline:var(--dsw-focus-ring-width)solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}@media (width<=760px){.iSWeNq_toolbar{padding:10px 14px}.iSWeNq_mobileToggle{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);font:inherit;cursor:pointer;padding:5px 8px;display:inline-block}.iSWeNq_layout{flex-direction:column;display:flex}.iSWeNq_navigation{border-right:0;border-bottom:1px solid var(--dsw-alias-border-l3);flex:none;max-height:34%;padding:12px 12px 18px}.iSWeNq_navigationClosed{display:none}.iSWeNq_reader{flex:1;padding:14px 14px 22px}.iSWeNq_search{width:100%}.iSWeNq_search input{flex:1;width:auto}}";
 			document.head.appendChild(element);
 		}
 		var StageNavigation_module_css_default = {
-			"toolSection": "ZQRolG_toolSection",
-			"layout": "ZQRolG_layout",
-			"mobileToggle": "ZQRolG_mobileToggle",
-			"gapButton": "ZQRolG_gapButton",
-			"progress": "ZQRolG_progress",
-			"toolBody": "ZQRolG_toolBody",
-			"focused": "ZQRolG_focused",
-			"reader": "ZQRolG_reader",
-			"toolbar": "ZQRolG_toolbar",
-			"blockLabel": "ZQRolG_blockLabel",
-			"analysisSection": "ZQRolG_analysisSection",
-			"previousResult": "ZQRolG_previousResult",
-			"error": "ZQRolG_error",
-			"turnButton": "ZQRolG_turnButton",
-			"sourceText": "ZQRolG_sourceText",
-			"activeSegment": "ZQRolG_activeSegment",
-			"statusLine": "ZQRolG_statusLine",
-			"segments": "ZQRolG_segments",
-			"textButton": "ZQRolG_textButton",
-			"stepNumber": "ZQRolG_stepNumber",
-			"segmentButton": "ZQRolG_segmentButton",
-			"muted": "ZQRolG_muted",
-			"blocks": "ZQRolG_blocks",
-			"empty": "ZQRolG_empty",
-			"detailPanel": "ZQRolG_detailPanel",
-			"search": "ZQRolG_search",
-			"navigationClosed": "ZQRolG_navigationClosed",
-			"block": "ZQRolG_block",
-			"notice": "ZQRolG_notice",
-			"stageLabel": "ZQRolG_stageLabel",
-			"inSegment": "ZQRolG_inSegment",
-			"readerHeader": "ZQRolG_readerHeader",
-			"turnItem": "ZQRolG_turnItem",
-			"stepCard": "ZQRolG_stepCard",
-			"scopeHint": "ZQRolG_scopeHint",
-			"page": "ZQRolG_page",
-			"navigation": "ZQRolG_navigation",
-			"readerInner": "ZQRolG_readerInner",
-			"stepHead": "ZQRolG_stepHead",
-			"request": "ZQRolG_request",
-			"activeTurn": "ZQRolG_activeTurn",
-			"message": "ZQRolG_message",
-			"tool": "ZQRolG_tool",
-			"loading": "ZQRolG_loading",
-			"readerHeading": "ZQRolG_readerHeading",
-			"toolbarActions": "ZQRolG_toolbarActions"
+			"readerHeader": "iSWeNq_readerHeader",
+			"mobileToggle": "iSWeNq_mobileToggle",
+			"turnButton": "iSWeNq_turnButton",
+			"error": "iSWeNq_error",
+			"navigation": "iSWeNq_navigation",
+			"notice": "iSWeNq_notice",
+			"muted": "iSWeNq_muted",
+			"progress": "iSWeNq_progress",
+			"detailPanel": "iSWeNq_detailPanel",
+			"toolbarActions": "iSWeNq_toolbarActions",
+			"readerHeading": "iSWeNq_readerHeading",
+			"page": "iSWeNq_page",
+			"blockLabel": "iSWeNq_blockLabel",
+			"loading": "iSWeNq_loading",
+			"activeTurn": "iSWeNq_activeTurn",
+			"toolSection": "iSWeNq_toolSection",
+			"segmentButton": "iSWeNq_segmentButton",
+			"toolbar": "iSWeNq_toolbar",
+			"message": "iSWeNq_message",
+			"navigationClosed": "iSWeNq_navigationClosed",
+			"reader": "iSWeNq_reader",
+			"empty": "iSWeNq_empty",
+			"stepNumber": "iSWeNq_stepNumber",
+			"analysisSection": "iSWeNq_analysisSection",
+			"activeSegment": "iSWeNq_activeSegment",
+			"textButton": "iSWeNq_textButton",
+			"block": "iSWeNq_block",
+			"segments": "iSWeNq_segments",
+			"toolBody": "iSWeNq_toolBody",
+			"focused": "iSWeNq_focused",
+			"inSegment": "iSWeNq_inSegment",
+			"gapButton": "iSWeNq_gapButton",
+			"stepCard": "iSWeNq_stepCard",
+			"search": "iSWeNq_search",
+			"request": "iSWeNq_request",
+			"stageLabel": "iSWeNq_stageLabel",
+			"turnItem": "iSWeNq_turnItem",
+			"blocks": "iSWeNq_blocks",
+			"readerInner": "iSWeNq_readerInner",
+			"scopeHint": "iSWeNq_scopeHint",
+			"statusLine": "iSWeNq_statusLine",
+			"tool": "iSWeNq_tool",
+			"sourceText": "iSWeNq_sourceText",
+			"layout": "iSWeNq_layout",
+			"stepHead": "iSWeNq_stepHead",
+			"previousResult": "iSWeNq_previousResult"
 		};
 		//#endregion
 		//#region src/client/StageNavigation.tsx
@@ -9907,6 +10206,28 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			sharedFindingsDescription: "Compare already shared reports and messages, correct actual recipients, and ask the root to verify conflicts.",
 			stageNavigationName: "Stage navigation",
 			stageNavigationDescription: "Manually classify complete recorded steps in a Session and browse adjacent purpose stages.",
+			mcpSelectionName: "MCP auto-selection",
+			mcpSelectionDescription: "Select native MCP tool definitions for the current task. PTC and both modes retains the Host’s original tools; no service installation, connection, or permission changes.",
+			mcpSelectionSettings: "MCP auto-selection settings",
+			mcpSelectionHint: "Filters only native MCP tool definitions. PTC and both modes keeps the Host’s original tools. This does not install or connect services or change permissions. Saving settings does not enable the feature.",
+			mcpSelectionBudgetHint: "The automatic budget is not a total tool limit: pinned tools and tools loaded through mcp_load may exceed it. A budget of 0 selects no tools automatically.",
+			mcpToolLimit: "Automatic tool budget (0–1,000)",
+			mcpMinProbability: "Minimum selection probability (0–1)",
+			mcpAllowZero: "Allow zero automatic selections",
+			mcpAllowZeroHint: "When off, select at least one available candidate even below the probability threshold. Requires an automatic budget of at least 1.",
+			mcpPinnedTools: "Pinned tool names",
+			mcpPinnedToolsHint: "One complete tool name per line, with no wildcards. Surrounding whitespace and duplicate names are removed. Leave empty for no pinned tools.",
+			mcpWaitMs: "Judgment wait (1–300,000 ms)",
+			mcpMaxRequestChars: "Request character limit (2,048–1,000,000)",
+			mcpToolLimitInvalid: "Enter a whole number from 0 to 1,000.",
+			mcpProbabilityInvalid: "Enter a probability from 0 to 1.",
+			mcpWaitInvalid: "Enter a whole number from 1 to 300,000 milliseconds.",
+			mcpRequestInvalid: "Enter a whole number from 2,048 to 1,000,000 characters.",
+			mcpPinsInvalid: "Use complete tool names without wildcard characters (*, ?, [ or ]).",
+			mcpZeroInvalid: "Allow zero selections or increase the automatic tool budget to at least 1.",
+			saveMcpSelection: "Save MCP selection settings",
+			mcpSelectionSaved: "MCP selection settings saved.",
+			mcpSelectionSaveFailed: "Could not save MCP selection settings. Your edits are preserved; review and retry.",
 			tabs: "Jev pages",
 			settings: "Settings and features",
 			records: "Decision records",
@@ -10040,6 +10361,28 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			sharedFindingsDescription: "比较已共享报告和消息，纠正实际接收者，并将冲突交给主代理核实。",
 			stageNavigationName: "阶段导航",
 			stageNavigationDescription: "手动分类会话中的完整步骤，并按轮次浏览连续目的阶段",
+			mcpSelectionName: "MCP 自动选择",
+			mcpSelectionDescription: "为当前任务筛选 native MCP 工具定义。PTC 模式保留宿主原工具；不安装或连接服务，不修改权限。",
+			mcpSelectionSettings: "MCP 自动选择设置",
+			mcpSelectionHint: "仅筛选 native MCP 工具定义，PTC 模式保留宿主原工具。不安装或连接服务，不修改权限。保存设置不会启用此功能。",
+			mcpSelectionBudgetHint: "自动预算并非工具总数上限：固定保留的工具与通过 mcp_load 补载的工具可超过预算。预算为 0 时不自动选择工具。",
+			mcpToolLimit: "自动工具预算（0–1,000）",
+			mcpMinProbability: "最低选择概率（0–1）",
+			mcpAllowZero: "允许自动选择零个工具",
+			mcpAllowZeroHint: "关闭时，即使未达到概率门槛，也至少选择一个可用候选工具；自动预算必须至少为 1。",
+			mcpPinnedTools: "固定保留的工具名",
+			mcpPinnedToolsHint: "每行一个完整工具名，不支持通配符。自动去除首尾空白与重复名称；留空表示不固定保留工具。",
+			mcpWaitMs: "判断等待时间（1–300,000 毫秒）",
+			mcpMaxRequestChars: "请求字符上限（2,048–1,000,000）",
+			mcpToolLimitInvalid: "请输入 0 到 1,000 之间的整数",
+			mcpProbabilityInvalid: "请输入 0 到 1 之间的概率",
+			mcpWaitInvalid: "请输入 1 到 300,000 之间的整数毫秒数",
+			mcpRequestInvalid: "请输入 2,048 到 1,000,000 之间的整数字符数",
+			mcpPinsInvalid: "请使用完整工具名，不要包含通配符（*、?、[ 或 ]）",
+			mcpZeroInvalid: "请允许选择零个工具，或将自动工具预算增加至至少 1",
+			saveMcpSelection: "保存 MCP 选择设置",
+			mcpSelectionSaved: "MCP 选择设置已保存",
+			mcpSelectionSaveFailed: "无法保存 MCP 选择设置，已保留编辑内容；请检查后重试",
 			tabs: "Jev 页面",
 			settings: "设置与功能",
 			records: "判断记录",
@@ -10223,6 +10566,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			}));
 			const form = ctx.configForms.get(ENTRY);
 			const selectionForm = ctx.configForms.get(SELECTION_ENTRY);
+			const mcpSelectionForm = ctx.configForms.get("jev-mcp-selection");
 			const outputAdmissionForm = ctx.configForms.get(OUTPUT_ENTRY);
 			const supervisionForm = ctx.configForms.get("jev-supervision");
 			const stageNavigationForm = ctx.configForms.get("jev-stage-navigation");
@@ -10240,6 +10584,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const face = {
 				form,
 				selectionForm,
+				mcpSelectionForm,
 				supervisionForm,
 				outputAdmissionForm,
 				stageNavigationForm,

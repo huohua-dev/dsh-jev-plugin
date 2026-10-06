@@ -41,6 +41,10 @@ All features share a connection, profile-scoped settings, decision records, and 
 
 **Feature branches are not all included in `main`.** Tool-output filtering is included in `main`; `codex/jev-tool-output-admission` preserves its development snapshot. Native web execution is on `codex/jev-native-web-execution` and is **paused; ordinary-site effectiveness has not passed acceptance**. Historical split branches preserve earlier work. See [branch status](docs/branches.md) before switching branches; this table always describes `main`.
 
+## MCP tool selection (feature branch, not in `main`)
+
+The unmerged `feat/jev-mcp-selection` branch adds an independent **MCP tool selection** switch, off by default. In native tool presentation it asks Jev which `mcp__…` tool definitions fit the current user request, then sends the main model only those definitions plus any pinned names. It never installs, starts, or connects an MCP server and never changes permissions or approvals: a hidden tool stays registered, and the Host's guards and approvals still apply. While a selection is narrowing the set, `mcp_catalog` lists omitted tools and `mcp_load` adds exact names from the next model step. PTC and `both` presentation are left unchanged. Timeouts, invalid answers, and other failures keep the original tool set. The budget, probability threshold, zero selection, pinned names, wait, and request size are configurable. Validation is offline only; no paid Jev or real MCP server was used. See the [package reference](packages/jev/README.md#mcp-tool-selection-feature-branch-featjev-mcp-selection).
+
 ## Stage navigation
 
 The **Stage navigation** tab follows Trajectory in the Web client. It reads recorded turns without changing the original Session.
@@ -180,6 +184,7 @@ Run the focused tests for the feature you change. Do not enable real-provider ex
 | Module | DSH extension points | Source |
 | --- | --- | --- |
 | Skill and file selection | `agent/pre-step`, `tools/execute`, `tools/post-execute` | [selection.ts](packages/jev/src/selection.ts) |
+| MCP tool selection (feature branch) | `system-prompt/assemble`, `agent/inbox/claimed`, `agent/pre-step`, `tools/change` | [mcp-selection.ts](packages/jev/src/mcp-selection.ts) |
 | Supervision and instruction guidance | `session/event`, `agent/pre-step`, `agent/turn-stopping`, `tools/pre-execute` | [supervision.ts](packages/jev/src/supervision.ts), [instructions.ts](packages/jev/src/instructions.ts) |
 | Message routing and shared corrections | Native Agent inbox, `agent/pre-step`, `tools/result`, subagent messaging | [interjection.ts](packages/jev/src/interjection.ts), [shared-findings.ts](packages/jev/src/shared-findings.ts) |
 | Tool-output and test-log filtering | `tools/post-execute` | [output-admission.ts](packages/jev/src/output-admission.ts) |

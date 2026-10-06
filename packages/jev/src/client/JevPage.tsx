@@ -6,6 +6,8 @@ import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SupervisionConfigValues } from '../supervision-types.ts'
 import type { SelectionConfigValues } from '../selection-types.ts'
+import type { McpSelectionConfigValues } from '../mcp-selection-types.ts'
+import { McpSelectionSettings } from './McpSelectionSettings.tsx'
 import type { OutputAdmissionConfigValues } from '../output-admission-types.ts'
 import type { StageNavigationConfigValues } from '../stage-types.ts'
 import type {
@@ -38,6 +40,7 @@ export interface JevPageRemote {
 export interface JevPageFace {
   form: ConfigForm<JevConfigValues>
   selectionForm?: ConfigForm<SelectionConfigValues>
+  mcpSelectionForm?: ConfigForm<McpSelectionConfigValues>
   outputAdmissionForm?: ConfigForm<OutputAdmissionConfigValues>
   supervisionForm?: ConfigForm<SupervisionConfigValues>
   stageNavigationForm?: ConfigForm<StageNavigationConfigValues>
@@ -54,12 +57,14 @@ type Tab = 'settings' | 'records'
 function featureName(feature: Pick<JevFeatureView, 'id' | 'name'>, t: Translate): string {
   if (feature.id === 'shared-findings') return t('sharedFindingsName')
   if (feature.id === 'stage-navigation') return t('stageNavigationName')
+  if (feature.id === 'mcp-selection') return t('mcpSelectionName')
   return feature.name
 }
 
 function featureDescription(feature: JevFeatureView, t: Translate): string {
   if (feature.id === 'shared-findings') return t('sharedFindingsDescription')
   if (feature.id === 'stage-navigation') return t('stageNavigationDescription')
+  if (feature.id === 'mcp-selection') return t('mcpSelectionDescription')
   return feature.description
 }
 
@@ -123,6 +128,7 @@ export function JevPage(props: JevPageProps) {
           <SettingsPanel form={props.form} jev={props.jev} notifySuccess={props.notifySuccess} t={t} />
           {props.supervisionForm && <SupervisionSettings form={props.supervisionForm} notifySuccess={props.notifySuccess} t={t} />}
           {props.selectionForm && <SelectionSettings form={props.selectionForm} notifySuccess={props.notifySuccess} t={t} />}
+          {props.mcpSelectionForm && <McpSelectionSettings form={props.mcpSelectionForm} notifySuccess={props.notifySuccess} t={t} />}
           {props.outputAdmissionForm && <OutputAdmissionSettings form={props.outputAdmissionForm} notifySuccess={props.notifySuccess} t={t} />}
           {props.stageNavigationForm && <StageNavigationSettings form={props.stageNavigationForm} notifySuccess={props.notifySuccess} t={t} />}
         </div>

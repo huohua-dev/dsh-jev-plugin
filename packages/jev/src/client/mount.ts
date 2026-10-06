@@ -13,6 +13,7 @@ import type {} from '@dsh-jev/plugin/remote'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { SupervisionConfigValues } from '../supervision-types.ts'
 import type { SelectionConfigValues } from '../selection-types.ts'
+import type { McpSelectionConfigValues } from '../mcp-selection-types.ts'
 import type { OutputAdmissionConfigValues } from '../output-admission-types.ts'
 import type { StageNavigationConfigValues } from '../stage-types.ts'
 import { JevPage, type JevConfigValues, type JevPageFace } from './JevPage.tsx'
@@ -47,6 +48,7 @@ function registerUi(ctx: Context): void {
   ctx.effect(() => ctx.locale.register(STAGE_NS, { zh: stageZh, en: stageEn }))
   const form = ctx.configForms.get<JevConfigValues>(ENTRY)
   const selectionForm = ctx.configForms.get<SelectionConfigValues>(SELECTION_ENTRY)
+  const mcpSelectionForm = ctx.configForms.get<McpSelectionConfigValues>('jev-mcp-selection')
   const outputAdmissionForm = ctx.configForms.get<OutputAdmissionConfigValues>(OUTPUT_ENTRY)
   const supervisionForm = ctx.configForms.get<SupervisionConfigValues>('jev-supervision')
   const stageNavigationForm = ctx.configForms.get<StageNavigationConfigValues>('jev-stage-navigation')
@@ -54,7 +56,7 @@ function registerUi(ctx: Context): void {
   let sequence = 0
   const dismiss = () => { toast.set(null) }
   const notifySuccess = (message: string) => { toast.set({ sequence: ++sequence, text: message }) }
-  const face: JevPageFace = { form, selectionForm, supervisionForm, outputAdmissionForm, stageNavigationForm, jev: jevPageRemote(ctx.remote.jev), notifySuccess }
+  const face: JevPageFace = { form, selectionForm, mcpSelectionForm, supervisionForm, outputAdmissionForm, stageNavigationForm, jev: jevPageRemote(ctx.remote.jev), notifySuccess }
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay', id: 'jev.feedback', inject: () => ({ hooks: { jevToast: toast }, dismiss }),
   }, JevToast))

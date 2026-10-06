@@ -4,6 +4,8 @@
       name: '@dsh-jev/plugin'
     - id: jev-selection
       name: '@dsh-jev/plugin/selection'
+    - id: jev-mcp-selection
+      name: '@dsh-jev/plugin/mcp-selection'
     - id: jev-supervision
       name: '@dsh-jev/plugin/supervision'
     - id: jev-instructions

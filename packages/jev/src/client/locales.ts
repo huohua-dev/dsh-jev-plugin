@@ -3,6 +3,10 @@
 /** Dictionary keys rendered by the Jev page. */
 export type JevLocaleKey =
   | 'sharedFindingsName' | 'sharedFindingsDescription' | 'stageNavigationName' | 'stageNavigationDescription'
+  | 'mcpSelectionName' | 'mcpSelectionDescription' | 'mcpSelectionSettings' | 'mcpSelectionHint' | 'mcpSelectionBudgetHint'
+  | 'mcpToolLimit' | 'mcpMinProbability' | 'mcpAllowZero' | 'mcpAllowZeroHint' | 'mcpPinnedTools' | 'mcpPinnedToolsHint' | 'mcpWaitMs' | 'mcpMaxRequestChars'
+  | 'mcpToolLimitInvalid' | 'mcpProbabilityInvalid' | 'mcpWaitInvalid' | 'mcpRequestInvalid' | 'mcpPinsInvalid' | 'mcpZeroInvalid'
+  | 'saveMcpSelection' | 'mcpSelectionSaved' | 'mcpSelectionSaveFailed'
   | 'tabs' | 'settings' | 'records' | 'connection' | 'features' | 'noFeatures'
   | 'baseUrl' | 'model' | 'credentialRef' | 'timeoutMs' | 'apiKey' | 'apiKeyHint'
   | 'configured' | 'missing' | 'readOnly' | 'unavailable' | 'loading'
@@ -28,6 +32,18 @@ export type JevLocaleKey =
 export const en: Record<JevLocaleKey, string> = {
   sharedFindingsName: 'Shared finding corrections', sharedFindingsDescription: 'Compare already shared reports and messages, correct actual recipients, and ask the root to verify conflicts.',
   stageNavigationName: 'Stage navigation', stageNavigationDescription: 'Manually classify complete recorded steps in a Session and browse adjacent purpose stages.',
+  mcpSelectionName: 'MCP auto-selection', mcpSelectionDescription: 'Select native MCP tool definitions for the current task. PTC and both modes retains the Host’s original tools; no service installation, connection, or permission changes.',
+  mcpSelectionSettings: 'MCP auto-selection settings',
+  mcpSelectionHint: 'Filters only native MCP tool definitions. PTC and both modes keeps the Host’s original tools. This does not install or connect services or change permissions. Saving settings does not enable the feature.',
+  mcpSelectionBudgetHint: 'The automatic budget is not a total tool limit: pinned tools and tools loaded through mcp_load may exceed it. A budget of 0 selects no tools automatically.',
+  mcpToolLimit: 'Automatic tool budget (0–1,000)', mcpMinProbability: 'Minimum selection probability (0–1)',
+  mcpAllowZero: 'Allow zero automatic selections', mcpAllowZeroHint: 'When off, select at least one available candidate even below the probability threshold. Requires an automatic budget of at least 1.',
+  mcpPinnedTools: 'Pinned tool names', mcpPinnedToolsHint: 'One complete tool name per line, with no wildcards. Surrounding whitespace and duplicate names are removed. Leave empty for no pinned tools.',
+  mcpWaitMs: 'Judgment wait (1–300,000 ms)', mcpMaxRequestChars: 'Request character limit (2,048–1,000,000)',
+  mcpToolLimitInvalid: 'Enter a whole number from 0 to 1,000.', mcpProbabilityInvalid: 'Enter a probability from 0 to 1.',
+  mcpWaitInvalid: 'Enter a whole number from 1 to 300,000 milliseconds.', mcpRequestInvalid: 'Enter a whole number from 2,048 to 1,000,000 characters.',
+  mcpPinsInvalid: 'Use complete tool names without wildcard characters (*, ?, [ or ]).', mcpZeroInvalid: 'Allow zero selections or increase the automatic tool budget to at least 1.',
+  saveMcpSelection: 'Save MCP selection settings', mcpSelectionSaved: 'MCP selection settings saved.', mcpSelectionSaveFailed: 'Could not save MCP selection settings. Your edits are preserved; review and retry.',
   tabs: 'Jev pages', settings: 'Settings and features', records: 'Decision records',
   connection: 'Shared connection', features: 'Features', noFeatures: 'No features are registered yet.',
   baseUrl: 'Service address', model: 'Model', credentialRef: 'Credential reference', timeoutMs: 'Timeout (ms)',
@@ -60,6 +76,18 @@ export const en: Record<JevLocaleKey, string> = {
 export const zh: Record<JevLocaleKey, string> = {
   sharedFindingsName: '共享发现纠正', sharedFindingsDescription: '比较已共享报告和消息，纠正实际接收者，并将冲突交给主代理核实。',
   stageNavigationName: '阶段导航', stageNavigationDescription: '手动分类会话中的完整步骤，并按轮次浏览连续目的阶段',
+  mcpSelectionName: 'MCP 自动选择', mcpSelectionDescription: '为当前任务筛选 native MCP 工具定义。PTC 模式保留宿主原工具；不安装或连接服务，不修改权限。',
+  mcpSelectionSettings: 'MCP 自动选择设置',
+  mcpSelectionHint: '仅筛选 native MCP 工具定义，PTC 模式保留宿主原工具。不安装或连接服务，不修改权限。保存设置不会启用此功能。',
+  mcpSelectionBudgetHint: '自动预算并非工具总数上限：固定保留的工具与通过 mcp_load 补载的工具可超过预算。预算为 0 时不自动选择工具。',
+  mcpToolLimit: '自动工具预算（0–1,000）', mcpMinProbability: '最低选择概率（0–1）',
+  mcpAllowZero: '允许自动选择零个工具', mcpAllowZeroHint: '关闭时，即使未达到概率门槛，也至少选择一个可用候选工具；自动预算必须至少为 1。',
+  mcpPinnedTools: '固定保留的工具名', mcpPinnedToolsHint: '每行一个完整工具名，不支持通配符。自动去除首尾空白与重复名称；留空表示不固定保留工具。',
+  mcpWaitMs: '判断等待时间（1–300,000 毫秒）', mcpMaxRequestChars: '请求字符上限（2,048–1,000,000）',
+  mcpToolLimitInvalid: '请输入 0 到 1,000 之间的整数', mcpProbabilityInvalid: '请输入 0 到 1 之间的概率',
+  mcpWaitInvalid: '请输入 1 到 300,000 之间的整数毫秒数', mcpRequestInvalid: '请输入 2,048 到 1,000,000 之间的整数字符数',
+  mcpPinsInvalid: '请使用完整工具名，不要包含通配符（*、?、[ 或 ]）', mcpZeroInvalid: '请允许选择零个工具，或将自动工具预算增加至至少 1',
+  saveMcpSelection: '保存 MCP 选择设置', mcpSelectionSaved: 'MCP 选择设置已保存', mcpSelectionSaveFailed: '无法保存 MCP 选择设置，已保留编辑内容；请检查后重试',
   tabs: 'Jev 页面', settings: '设置与功能', records: '判断记录',
   connection: '共用连接', features: '功能目录', noFeatures: '当前没有登记的功能',
   baseUrl: '服务地址', model: '模型', credentialRef: '凭据引用', timeoutMs: '超时（毫秒）',

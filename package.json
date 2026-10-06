@@ -10,6 +10,10 @@
       "types": "./runtime/types/index.d.ts",
       "default": "./runtime/index.js"
     },
+    "./mcp-selection": {
+      "types": "./runtime/types/mcp-selection.d.ts",
+      "default": "./runtime/mcp-selection.js"
+    },
     "./selection": {
       "types": "./runtime/types/selection.d.ts",
       "default": "./runtime/selection.js"
@@ -84,6 +88,7 @@
     }
   },
   "peerDependencies": {
+    "@deepseek-ai/dsh-system-prompt": "0.2.0-rc.2",
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
     "@deepseek-ai/dsh-fs": "0.2.0-rc.2",

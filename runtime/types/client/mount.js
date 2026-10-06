@@ -20,6 +20,7 @@ function registerUi(ctx) {
     ctx.effect(() => ctx.locale.register(STAGE_NS, { zh: stageZh, en: stageEn }));
     const form = ctx.configForms.get(ENTRY);
     const selectionForm = ctx.configForms.get(SELECTION_ENTRY);
+    const mcpSelectionForm = ctx.configForms.get('jev-mcp-selection');
     const outputAdmissionForm = ctx.configForms.get(OUTPUT_ENTRY);
     const supervisionForm = ctx.configForms.get('jev-supervision');
     const stageNavigationForm = ctx.configForms.get('jev-stage-navigation');
@@ -27,7 +28,7 @@ function registerUi(ctx) {
     let sequence = 0;
     const dismiss = () => { toast.set(null); };
     const notifySuccess = (message) => { toast.set({ sequence: ++sequence, text: message }); };
-    const face = { form, selectionForm, supervisionForm, outputAdmissionForm, stageNavigationForm, jev: jevPageRemote(ctx.remote.jev), notifySuccess };
+    const face = { form, selectionForm, mcpSelectionForm, supervisionForm, outputAdmissionForm, stageNavigationForm, jev: jevPageRemote(ctx.remote.jev), notifySuccess };
     ctx.slots.inject('shell.overlay', () => ctx.slots.register({
         name: 'shell.overlay', id: 'jev.feedback', inject: () => ({ hooks: { jevToast: toast }, dismiss }),
     }, JevToast));

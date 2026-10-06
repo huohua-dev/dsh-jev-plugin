@@ -2,12 +2,15 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 /** Jev bundle settings, feature catalogue, and bounded decision-record browser. */
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Button, SegmentedTabs, StateDot, Switch } from '@deepseek-ai/dsh-client-ui-primitives';
+import { McpSelectionSettings } from "./McpSelectionSettings.js";
 import css from './JevPage.module.css';
 function featureName(feature, t) {
     if (feature.id === 'shared-findings')
         return t('sharedFindingsName');
     if (feature.id === 'stage-navigation')
         return t('stageNavigationName');
+    if (feature.id === 'mcp-selection')
+        return t('mcpSelectionName');
     return feature.name;
 }
 function featureDescription(feature, t) {
@@ -15,6 +18,8 @@ function featureDescription(feature, t) {
         return t('sharedFindingsDescription');
     if (feature.id === 'stage-navigation')
         return t('stageNavigationDescription');
+    if (feature.id === 'mcp-selection')
+        return t('mcpSelectionDescription');
     return feature.description;
 }
 function recordFeatureName(features, featureId, t) {
@@ -58,7 +63,7 @@ export function JevPage(props) {
                     { value: 'settings', label: t('settings'), id: 'jev-settings-tab', panelId: 'jev-settings-panel' },
                     { value: 'records', label: t('records'), id: 'jev-records-tab', panelId: 'jev-records-panel' },
                 ], value: tab, onChange: setTab, className: css.tabs }), tab === 'settings'
-                ? _jsxs("div", { id: "jev-settings-panel", role: "tabpanel", "aria-labelledby": "jev-settings-tab", className: css.panel, children: [_jsx(SettingsPanel, { form: props.form, jev: props.jev, notifySuccess: props.notifySuccess, t: t }), props.supervisionForm && _jsx(SupervisionSettings, { form: props.supervisionForm, notifySuccess: props.notifySuccess, t: t }), props.selectionForm && _jsx(SelectionSettings, { form: props.selectionForm, notifySuccess: props.notifySuccess, t: t }), props.outputAdmissionForm && _jsx(OutputAdmissionSettings, { form: props.outputAdmissionForm, notifySuccess: props.notifySuccess, t: t }), props.stageNavigationForm && _jsx(StageNavigationSettings, { form: props.stageNavigationForm, notifySuccess: props.notifySuccess, t: t })] })
+                ? _jsxs("div", { id: "jev-settings-panel", role: "tabpanel", "aria-labelledby": "jev-settings-tab", className: css.panel, children: [_jsx(SettingsPanel, { form: props.form, jev: props.jev, notifySuccess: props.notifySuccess, t: t }), props.supervisionForm && _jsx(SupervisionSettings, { form: props.supervisionForm, notifySuccess: props.notifySuccess, t: t }), props.selectionForm && _jsx(SelectionSettings, { form: props.selectionForm, notifySuccess: props.notifySuccess, t: t }), props.mcpSelectionForm && _jsx(McpSelectionSettings, { form: props.mcpSelectionForm, notifySuccess: props.notifySuccess, t: t }), props.outputAdmissionForm && _jsx(OutputAdmissionSettings, { form: props.outputAdmissionForm, notifySuccess: props.notifySuccess, t: t }), props.stageNavigationForm && _jsx(StageNavigationSettings, { form: props.stageNavigationForm, notifySuccess: props.notifySuccess, t: t })] })
                 : _jsx("div", { id: "jev-records-panel", role: "tabpanel", "aria-labelledby": "jev-records-tab", children: _jsx(RecordsPanel, { jev: props.jev, t: t }) })] }));
 }
 const SELECTION_FIELDS = [
