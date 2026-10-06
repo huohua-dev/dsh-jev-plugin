@@ -59,10 +59,8 @@ class UnusedPtcRuntime extends PtcRuntime {
 interface Wire {
   state: {
     context: { role: 'user'; text: string }[]
-    candidates: { name: string; description: string }[]
-    policy: { toolLimit: number; presentationOnly: boolean }
   }
-  questions: Record<string, { type: string }>
+  questions: Record<string, { type: string; instructions: string }>
 }
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => {
@@ -93,8 +91,9 @@ async function fixture(script: StreamChunk[][], options: {
     const wire = JSON.parse(Buffer.concat(chunks).toString()) as Wire
     requests.push(wire)
     duringHttp.push(observe())
-    const answers = Object.fromEntries(Object.keys(wire.questions).map((id, index) => [id,
-      { noul: wire.state.candidates[index]?.name === SELECTED ? 0.95 : 0.05 }]))
+    // Each question names the tool it rates; the fixture scores by that text, never by position.
+    const answers = Object.fromEntries(Object.entries(wire.questions).map(([id, question]) => [id,
+      { noul: question.instructions.includes(`Tool: ${SELECTED}.`) ? 0.95 : 0.05 }]))
     response.writeHead(options.fault === 'http' ? 503 : 200, { 'content-type': 'application/json' })
     response.end(JSON.stringify({ answers: options.fault === 'malformed' ? {} : answers }))
   })
@@ -183,8 +182,10 @@ describe('native MCP selection through the published AgentLoop (offline)', () =>
     expect(h.requests).toHaveLength(1)
     expect(h.requests[0]!.state.context).toEqual([{ role: 'user', text: promptText }])
     expect(h.duringHttp).toEqual([{ visibleUsers: [], mainRequests: 0 }])
-    expect(h.requests[0]!.state.candidates.map(candidate => candidate.name)).toEqual([...MCP_NAMES].sort())
-    expect(h.requests[0]!.state.policy).toMatchObject({ toolLimit: 1, presentationOnly: true })
+    // One question per eligible definition, each carrying its own name and description.
+    const rated = Object.values(h.requests[0]!.questions).map(question => /Tool: (\S+)\. Description:/.exec(question.instructions)?.[1])
+    expect(rated).toEqual([...MCP_NAMES].sort())
+    expect(JSON.stringify(h.requests[0]!.state)).not.toContain(SELECTED) // tool text is never duplicated into shared state
     expect(Object.values(h.requests[0]!.questions).every(question => question.type === 'noul')).toBe(true)
     expect(h.model.requests).toHaveLength(4)
     const schemas = h.model.requests.map(request => names(request.tools))

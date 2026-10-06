@@ -4,7 +4,7 @@
 
 **DeepSeek Harness（DSH）的原生 Jev 插件：按需接入 TypeSafe Jev / System One 判断。**
 
-`deepseek-harness-jev` 将 [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness) 与 [TypeSafe AI 的 Jev](https://typesafe.ai/) 连接起来，为 Agent 提供技能与文件选择、任务监督、共享发现纠正、工具日志筛选、单次操作审批和历史轨迹阶段导航。12 项功能可在同一个 Jev 设置页分别开启，默认全部关闭。
+`deepseek-harness-jev` 将 [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness) 与 [TypeSafe AI 的 Jev](https://typesafe.ai/) 连接起来，为 Agent 提供技能、文件与 MCP 工具选择、任务监督、共享发现纠正、工具日志筛选、单次操作审批和历史轨迹阶段导航。13 项功能可在同一个 Jev 设置页分别开启，默认全部关闭。
 
 主模型继续负责规划、生成回答和调用原生工具；插件在 DSH 的技能目录、Agent 生命周期、工具结果与审批等扩展点自动发起已启用的 Jev 判断，再按对应功能应用结果。主模型由 DSH 配置，Jev 连接单独配置。接入基于公开的 Cordis / DSH 插件接口，无需修改宿主源码。
 
@@ -22,6 +22,7 @@
 | --- | --- |
 | 技能选择（Skill selection） | 在技能目录发布前，对名称和摘要排序；主 Agent 仍通过原生 skill 加载正文。 |
 | 文件排序（File ranking） | 对原生 glob 返回的路径排序，不追加文件扫描或正文读取。 |
+| MCP 工具选择（MCP tool selection） | 在 native 工具展示模式下，只把 Jev 判定与当前请求相关的 `mcp__…` 工具定义发给主模型；`mcp_catalog` 与 `mcp_load` 用于找回被省略的工具。不启动服务，不改变权限。 |
 | 跑偏提醒（Drift monitoring） | 在模型步骤之间检查进展，必要时提供一次非阻塞提醒。 |
 | 完成核查（Completion checks） | 对照已有证据检查已展示的最终回答，最多追加一次补充处理。 |
 | 持续目标监督（Goal supervision） | 检查原生目标完成申请，连续多轮没有进展时暂停。 |
@@ -35,15 +36,17 @@
 
 ![Jev 功能设置页：选择、监督、共享纠正和工作区审批等功能可分别开启](docs/images/jev-feature-toggles.png)
 
-*较早版本的功能设置示例。截图展示 9 个开关及用户自行选择的状态；当前 `main` 包含上表中的 12 项功能，新安装时默认全部关闭。*
+*较早版本的功能设置示例。截图展示 9 个开关及用户自行选择的状态；当前 `main` 包含上表中的 13 项功能，新安装时默认全部关闭。*
 
 所有功能共用连接、按 profile 保存的设置、判断记录与操作回执。多数 Agent 功能面向存活的 Web 主会话；向子 Agent 发送纠正，不等于子 Agent 自动拥有其他 Jev 增强。
 
 **功能分支不等于已合入 main。** 工具输出筛选已进入 `main`；`codex/jev-tool-output-admission` 保留开发快照。原生网页执行在 `codex/jev-native-web-execution`，该方向目前**暂停，普通网站效果未通过验收**。其他历史分支保留早期实现。切换前请看[分支状态](docs/branches.md)，本表始终以 `main` 为准。
 
-## MCP 工具自动选择（功能分支，未合入 `main`）
+## MCP 工具选择
 
-未合入的 `feat/jev-mcp-selection` 分支新增独立的 **MCP 自动选择** 开关，默认关闭。在 native 工具展示模式下，它请 Jev 判断哪些 `mcp__…` 工具定义与当前用户请求相关，只把这些定义和固定保留的工具名发给主模型。它不安装、启动或连接 MCP 服务，也不修改权限或审批：被隐藏的工具仍保持注册，宿主的守卫与审批照常生效。筛选生效期间，`mcp_catalog` 可列出被省略的工具，`mcp_load` 可按完整名称补载，从下一模型步骤生效。PTC 与 `both` 展示模式保持原样。超时、无效回答等故障时保留原有工具集。预算、概率门槛、是否允许零选、固定保留名单、等待时间和请求大小均可配置。本分支仅经离线测试，未使用收费 Jev 或真实 MCP 服务验证。详见[包参考](packages/jev/README.md#mcp-tool-selection-feature-branch-featjev-mcp-selection)。
+独立的 **MCP 工具选择** 开关默认关闭。在 native 工具展示模式下，它请 Jev 判断哪些 `mcp__…` 工具定义与当前用户请求相关，只把这些定义和固定保留的工具名发给主模型。它不安装、启动或连接 MCP 服务，也不修改权限或审批：被隐藏的工具仍保持注册，宿主的守卫与审批照常生效。筛选生效期间，`mcp_catalog` 可列出被省略的工具，`mcp_load` 可按完整名称补载，从下一模型步骤生效。PTC 与 `both` 展示模式保持原样。超时、无效回答等故障时保留原有工具集。预算、概率门槛、是否允许零选、固定保留名单、等待时间和请求大小均可配置。
+
+验证范围有限。离线测试用发布版 AgentLoop 和本地 System One 夹具驱动完整流程，不涉及真实 MCP 服务。另有一次可选的真实 Jev 实测：对一个合成的 45 个工具、四个服务的目录评估四个任务，四次判断全部成功，耗时 405–810 毫秒；每个任务都选中了对应服务的工具，未漏掉事先列出的必需定义，无关的编码任务一个也没选。四个任务不能说明在其他目录、其他模型或真实 MCP 服务上的准确率。详见[包参考](packages/jev/README.md#mcp-tool-selection)与[验证说明](docs/validation.md)。
 
 ## 阶段导航
 
@@ -70,7 +73,7 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 *在「包名或地址」中粘贴仓库 URL，再点击「安装」。*
 
-**插件启用与功能启用是两层开关：12 项 Jev 功能默认仍为关闭。** 安装作用于当前 Web 连接的 Host profile；Host 需可运行 pnpm 并访问 GitHub。仓库已包含可直接加载的插件入口和预构建文件，不会在用户机器上编译源码，也不要求发布 npm 包。
+**插件启用与功能启用是两层开关：13 项 Jev 功能默认仍为关闭。** 安装作用于当前 Web 连接的 Host profile；Host 需可运行 pnpm 并访问 GitHub。仓库已包含可直接加载的插件入口和预构建文件，不会在用户机器上编译源码，也不要求发布 npm 包。
 
 当前 GitHub 入口提供 `main` 的功能，不包含实验分支。历史 [v0.1.0 安装包](https://github.com/luobosibing2/deepseek-harness-jev/releases/tag/v0.1.0)不含新合入的日志筛选功能；需要自行修改代码时再看下面的源码构建步骤。
 
@@ -184,7 +187,7 @@ pnpm exec vitest run packages/jev/tests/host.test.ts packages/jev/tests/wire.tes
 | 模块 | DSH 扩展点 | 源码 |
 | --- | --- | --- |
 | 技能与文件选择 | `agent/pre-step`、`tools/execute`、`tools/post-execute` | [selection.ts](packages/jev/src/selection.ts) |
-| MCP 工具选择（功能分支） | `system-prompt/assemble`、`agent/inbox/claimed`、`agent/pre-step`、`tools/change` | [mcp-selection.ts](packages/jev/src/mcp-selection.ts) |
+| MCP 工具选择 | `system-prompt/assemble`、`agent/inbox/claimed`、`agent/pre-step`、`tools/change` | [mcp-selection.ts](packages/jev/src/mcp-selection.ts) |
 | 监督与约束提醒 | `session/event`、`agent/pre-step`、`agent/turn-stopping`、`tools/pre-execute` | [supervision.ts](packages/jev/src/supervision.ts)、[instructions.ts](packages/jev/src/instructions.ts) |
 | 消息分流与共享纠正 | 原生 Agent inbox、`agent/pre-step`、`tools/result`、子 Agent 消息 | [interjection.ts](packages/jev/src/interjection.ts)、[shared-findings.ts](packages/jev/src/shared-findings.ts) |
 | 工具输出与测试日志筛选 | `tools/post-execute` | [output-admission.ts](packages/jev/src/output-admission.ts) |

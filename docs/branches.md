@@ -8,7 +8,7 @@
 
 | Branch | Status / 状态 |
 | --- | --- |
-| `main` | Shared service, skill/glob, six supervision/correction features, workspace approval, tool-output admission, stage navigation / 公共能力、技能与glob、六项监督纠正、工作区审批、工具输出准入、阶段导航 |
+| `main` | Shared service, skill/glob, MCP tool selection, six supervision/correction features, workspace approval, tool-output admission, stage navigation / 公共能力、技能与glob、MCP工具选择、六项监督纠正、工作区审批、工具输出准入、阶段导航 |
 | `codex/jev-whole-step-stage-navigation` | Historical stage-navigation implementation, integrated in main / 阶段导航历史实现，已集成到main |
 | `codex/jev-common-foundation` | Historical foundation snapshot, integrated in main / 已集成的公共能力历史快照 |
 | `codex/jev-skill-file-selection` | Historical selection snapshot, integrated in main / 已集成的选择模块历史快照 |
@@ -19,7 +19,6 @@
 | `codex/jev-task-execution-checks` | Historical integrated hook snapshot / 监督纠正历史整合快照 |
 | `codex/jev-workspace-approval` | Accepted approval implementation, integrated in main / 已验收并合入的审批实现 |
 | `codex/jev-tool-output-admission` | Historical output/test-log filtering snapshot, integrated in main; includes an approval integration snapshot / 输出与测试日志筛选历史快照，已集成到main，含审批集成快照 |
-| `feat/jev-mcp-selection` | Unmerged: native MCP tool-definition selection with catalog/load recovery; offline tests only, no paid or real-MCP validation / 未合入：native MCP 工具定义选择及目录/补载，仅离线测试，未做收费服务或真实 MCP 验证 |
 | `codex/jev-native-web-execution` | Paused experiment; ordinary-site effectiveness not accepted / 已暂停实验，正常网站效果未验收 |
 | `codex/jev-desktop-install-validation` | Historical validation baseline; no additional product implementation / 历史验证基线，无新增产品实现 |
 | `codex/jev-open-source-release` | Publication documentation and packaging metadata / 公开发布文档与打包元数据 |

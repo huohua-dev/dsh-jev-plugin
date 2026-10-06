@@ -15,6 +15,8 @@ import type { JevRequest } from '../src/types.ts'
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
 const user = (text: string) => createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text }] })
+/** The public tool a question rates, read from its own prompt rather than a positional index. */
+const toolOf = (question: JevRequest['questions'][number]): string => /Tool: (\S+)\. Description:/.exec(String(question.prompt))![1]!
 const A = 'mcp__burp__alpha'
 const B = 'mcp__burp__beta'
 class Runtime extends PtcRuntime {
@@ -37,9 +39,8 @@ async function fixture(mode: ToolPresentationMode = 'native') {
   const judge = vi.fn(async (options: JevJudgeOnceOptions): Promise<JevJudgeOnceResult> => {
     const request = await options.refresh(options.signal!)
     requests.push(request)
-    const candidates = (request.state as { candidates: { name: string }[] }).candidates
     return { kind: 'ok', operationId: `op-${requests.length}`, attemptId: 'attempt', response: {
-      answers: candidates.map((tool, i) => ({ id: `tool-${i}`, kind: 'noul', probability: scores[tool.name] ?? 0.9 })),
+      answers: request.questions.map(question => ({ id: question.id, kind: 'noul', probability: scores[toolOf(question)] ?? 0.9 })),
     } }
   })
   const receipt = vi.fn(async () => {})

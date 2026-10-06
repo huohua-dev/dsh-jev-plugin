@@ -4,7 +4,7 @@ English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https:
 
 **Native DeepSeek Harness (DSH) plugin integrating TypeSafe Jev as a System One decision layer.**
 
-`deepseek-harness-jev` connects [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) to [Jev by TypeSafe AI](https://typesafe.ai/) for agent skill and file selection, task supervision, shared-finding corrections, tool-output filtering, single-operation approval assistance, and historical stage navigation. Its 12 features are individually configurable from one Jev settings page and are all disabled by default.
+`deepseek-harness-jev` connects [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) to [Jev by TypeSafe AI](https://typesafe.ai/) for agent skill, file, and MCP tool selection, task supervision, shared-finding corrections, tool-output filtering, single-operation approval assistance, and historical stage navigation. Its 13 features are individually configurable from one Jev settings page and are all disabled by default.
 
 The main model continues to plan, generate answers, and call native tools. The plugin automatically invokes enabled Jev judgments at DSH extension points for skill catalogs, agent lifecycle, tool results, and approvals, then applies results according to each feature. DSH configures the main model; Jev has a separate connection. Integration uses public Cordis / DSH plugin APIs without modifying the host source.
 
@@ -22,6 +22,7 @@ The following features are in `main`. **Every feature is independently disabled 
 | --- | --- |
 | Skill selection | Ranks skill names and summaries before catalog publication. The main agent still loads the original skill. |
 | File ranking | Ranks the original `glob` path results without another filesystem scan or file-content read. |
+| MCP tool selection | In native tool presentation, sends the main model only the `mcp__…` tool definitions Jev rates relevant to the current request; `mcp_catalog` and `mcp_load` recover omissions. Never starts a server or changes permissions. |
 | Drift reminders | Checks progress between model steps and can deliver one nonblocking reminder. |
 | Completion checks | Reviews the visible final answer against recorded evidence and can request at most one supplemental attempt. |
 | Goal supervision | Checks native goal completion and pauses after a configurable run of rounds without progress. |
@@ -35,15 +36,17 @@ The following features are in `main`. **Every feature is independently disabled 
 
 ![Jev settings page with independent feature switches for selection, supervision, corrections, and workspace approval](docs/images/jev-feature-toggles.png)
 
-*Example feature settings from an earlier build. The screenshot shows nine switches and user-selected states; current `main` includes the twelve features listed above, all disabled on a fresh installation.*
+*Example feature settings from an earlier build. The screenshot shows nine switches and user-selected states; current `main` includes the thirteen features listed above, all disabled on a fresh installation.*
 
 All features share a connection, profile-scoped settings, decision records, and operation receipts. Most agent-facing features target live Web root sessions; correcting a child agent does not enable every feature inside that child.
 
 **Feature branches are not all included in `main`.** Tool-output filtering is included in `main`; `codex/jev-tool-output-admission` preserves its development snapshot. Native web execution is on `codex/jev-native-web-execution` and is **paused; ordinary-site effectiveness has not passed acceptance**. Historical split branches preserve earlier work. See [branch status](docs/branches.md) before switching branches; this table always describes `main`.
 
-## MCP tool selection (feature branch, not in `main`)
+## MCP tool selection
 
-The unmerged `feat/jev-mcp-selection` branch adds an independent **MCP tool selection** switch, off by default. In native tool presentation it asks Jev which `mcp__…` tool definitions fit the current user request, then sends the main model only those definitions plus any pinned names. It never installs, starts, or connects an MCP server and never changes permissions or approvals: a hidden tool stays registered, and the Host's guards and approvals still apply. While a selection is narrowing the set, `mcp_catalog` lists omitted tools and `mcp_load` adds exact names from the next model step. PTC and `both` presentation are left unchanged. Timeouts, invalid answers, and other failures keep the original tool set. The budget, probability threshold, zero selection, pinned names, wait, and request size are configurable. Validation is offline only; no paid Jev or real MCP server was used. See the [package reference](packages/jev/README.md#mcp-tool-selection-feature-branch-featjev-mcp-selection).
+The independent **MCP tool selection** switch is off by default. In native tool presentation it asks Jev which `mcp__…` tool definitions fit the current user request, then sends the main model only those definitions plus any pinned names. It never installs, starts, or connects an MCP server and never changes permissions or approvals: a hidden tool stays registered, and the Host's guards and approvals still apply. While a selection is narrowing the set, `mcp_catalog` lists omitted tools and `mcp_load` adds exact names from the next model step. PTC and `both` presentation are left unchanged. Timeouts, invalid answers, and other failures keep the original tool set. The budget, probability threshold, zero selection, pinned names, wait, and request size are configurable.
+
+Validation is limited. The offline suite drives the published AgentLoop with a local System One fixture and no MCP server. One opt-in live run against the real Jev endpoint rated a synthetic 45-tool, four-server catalog for four tasks; all four judgments succeeded in 405–810 ms, each selected the expected server's tools without missing the definitions a reviewer listed in advance, and the unrelated coding task selected none. Four tasks do not establish accuracy on other catalogs, models, or real MCP servers. See the [package reference](packages/jev/README.md#mcp-tool-selection) and [validation notes](docs/validation.md).
 
 ## Stage navigation
 
@@ -70,7 +73,7 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 *Paste the repository URL into “Package name or address”, then click Install.*
 
-**Enabling the package does not enable its 12 Jev features; they remain off by default.** Installation applies to the Host profile serving the current Web UI. The Host needs pnpm and access to GitHub. The repository includes the plugin entry and prebuilt files, so installation does not compile source on the user's machine or require an npm registry publication.
+**Enabling the package does not enable its 13 Jev features; they remain off by default.** Installation applies to the Host profile serving the current Web UI. The Host needs pnpm and access to GitHub. The repository includes the plugin entry and prebuilt files, so installation does not compile source on the user's machine or require an npm registry publication.
 
 The GitHub entry provides the `main` features, not experimental branches. The older [v0.1.0 release](https://github.com/luobosibing2/deepseek-harness-jev/releases/tag/v0.1.0) does not include the newly integrated log filters. Build from source below only when changing or building the code yourself.
 
@@ -184,7 +187,7 @@ Run the focused tests for the feature you change. Do not enable real-provider ex
 | Module | DSH extension points | Source |
 | --- | --- | --- |
 | Skill and file selection | `agent/pre-step`, `tools/execute`, `tools/post-execute` | [selection.ts](packages/jev/src/selection.ts) |
-| MCP tool selection (feature branch) | `system-prompt/assemble`, `agent/inbox/claimed`, `agent/pre-step`, `tools/change` | [mcp-selection.ts](packages/jev/src/mcp-selection.ts) |
+| MCP tool selection | `system-prompt/assemble`, `agent/inbox/claimed`, `agent/pre-step`, `tools/change` | [mcp-selection.ts](packages/jev/src/mcp-selection.ts) |
 | Supervision and instruction guidance | `session/event`, `agent/pre-step`, `agent/turn-stopping`, `tools/pre-execute` | [supervision.ts](packages/jev/src/supervision.ts), [instructions.ts](packages/jev/src/instructions.ts) |
 | Message routing and shared corrections | Native Agent inbox, `agent/pre-step`, `tools/result`, subagent messaging | [interjection.ts](packages/jev/src/interjection.ts), [shared-findings.ts](packages/jev/src/shared-findings.ts) |
 | Tool-output and test-log filtering | `tools/post-execute` | [output-admission.ts](packages/jev/src/output-admission.ts) |
