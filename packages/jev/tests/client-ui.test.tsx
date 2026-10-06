@@ -57,7 +57,7 @@ function formStub(accept = true) {
 function selectionFormStub(options: { accept?: boolean; initial?: SelectionConfigValues; loading?: boolean } = {}) {
   let snapshot: ConfigFormSnapshot<SelectionConfigValues> = {
     status: options.loading ? 'loading' : 'ready',
-    value: options.loading ? undefined : options.initial ?? { skillLimit: 5, fileCandidates: 40, fileLimit: 12 },
+    value: options.loading ? undefined : options.initial ?? { skillLimit: 5, skillMinProbability: 0.5, fileCandidates: 40, fileLimit: 12 },
     base: {}, user: {}, revision: 4, writable: true, mode: 'host',
   }
   const listeners = new Set<() => void>()
@@ -309,29 +309,32 @@ describe('Jev selection counts', () => {
     const selection = selectionFormStub({ loading: true })
     renderPage(form, remoteStub(), selection.form)
     expect(screen.queryByLabelText(en.skillSummaryCount)).toBeNull()
-    selection.load({ skillLimit: 8, fileCandidates: 60, fileLimit: 16 })
+    selection.load({ skillLimit: 8, skillMinProbability: 0.25, fileCandidates: 60, fileLimit: 16 })
     await waitFor(() => { expect((screen.getByLabelText(en.skillSummaryCount) as HTMLInputElement).value).toBe('8') })
+    expect((screen.getByLabelText(en.skillMinProbability) as HTMLInputElement).value).toBe('0.25')
     expect((screen.getByLabelText(en.fileRankingMaximum) as HTMLInputElement).value).toBe('60')
     expect((screen.getByLabelText(en.rankedPathCount) as HTMLInputElement).value).toBe('16')
   })
 
-  it('saves all three counts in one revision-aware mutation', async () => {
+  it('saves every selection setting in one revision-aware mutation', async () => {
     const { form } = formStub()
     const selection = selectionFormStub()
     const notifySuccess = vi.fn()
     renderPage(form, remoteStub(), selection.form, notifySuccess)
     await waitFor(() => { expect((screen.getByLabelText(en.skillSummaryCount) as HTMLInputElement).value).toBe('5') })
     fireEvent.change(screen.getByLabelText(en.skillSummaryCount), { target: { value: '9' } })
+    fireEvent.change(screen.getByLabelText(en.skillMinProbability), { target: { value: '0' } })
     fireEvent.change(screen.getByLabelText(en.fileRankingMaximum), { target: { value: '50' } })
     fireEvent.change(screen.getByLabelText(en.rankedPathCount), { target: { value: '18' } })
     fireEvent.click(screen.getByRole('button', { name: en.saveSelectionCounts }))
     await waitFor(() => { expect(selection.mutate).toHaveBeenCalledTimes(1) })
     expect(selection.mutate).toHaveBeenCalledWith([
       { op: 'set', path: ['skillLimit'], value: 9 },
+      { op: 'set', path: ['skillMinProbability'], value: 0 },
       { op: 'set', path: ['fileCandidates'], value: 50 },
       { op: 'set', path: ['fileLimit'], value: 18 },
     ], 4)
-    expect(selection.getValue()).toEqual({ skillLimit: 9, fileCandidates: 50, fileLimit: 18 })
+    expect(selection.getValue()).toEqual({ skillLimit: 9, skillMinProbability: 0, fileCandidates: 50, fileLimit: 18 })
     expect(notifySuccess).toHaveBeenCalledWith(en.selectionCountSaved)
   })
 
@@ -346,7 +349,21 @@ describe('Jev selection counts', () => {
       expect(screen.getByLabelText(en.skillSummaryCount).getAttribute('aria-invalid')).toBe('true')
       expect(selection.mutate).not.toHaveBeenCalled()
     }
-    expect(selection.getValue()).toEqual({ skillLimit: 5, fileCandidates: 40, fileLimit: 12 })
+    expect(selection.getValue()).toEqual({ skillLimit: 5, skillMinProbability: 0.5, fileCandidates: 40, fileLimit: 12 })
+  })
+
+  it('rejects skill probabilities outside 0 to 1 without a write', async () => {
+    const { form } = formStub()
+    const selection = selectionFormStub()
+    renderPage(form, remoteStub(), selection.form)
+    await waitFor(() => { expect((screen.getByLabelText(en.skillMinProbability) as HTMLInputElement).value).toBe('0.5') })
+    for (const value of ['', ' ', '-0.1', '1.01', 'abc']) {
+      fireEvent.change(screen.getByLabelText(en.skillMinProbability), { target: { value } })
+      fireEvent.click(screen.getByRole('button', { name: en.saveSelectionCounts }))
+      expect(screen.getByLabelText(en.skillMinProbability).getAttribute('aria-invalid')).toBe('true')
+      expect(screen.getByText(en.selectionProbabilityInvalid)).toBeTruthy()
+      expect(selection.mutate).not.toHaveBeenCalled()
+    }
   })
 
   it('keeps edits and saved values when the form refuses a revision write', async () => {

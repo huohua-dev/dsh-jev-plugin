@@ -96,7 +96,7 @@ async function setup(url: string) {
     timeoutMs: SEARCH_TIMEOUT_MS,
   })
   const fileLimit = createVolatile(1)
-  apply(ctx, { skillLimit: createVolatile(5), fileCandidates: createVolatile(40), fileLimit })
+  apply(ctx, { skillLimit: createVolatile(5), skillMinProbability: createVolatile(0.5), fileCandidates: createVolatile(40), fileLimit })
   const session = ctx.sessions.create(SessionId('jev-selection-common'), { meta: { cwd: root } })
   session.append('user/message', createUserMessage({
     content: [{ type: 'text', text: 'Find the relevant TypeScript file' }], source: { kind: 'user' },

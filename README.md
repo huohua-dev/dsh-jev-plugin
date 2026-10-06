@@ -10,7 +10,7 @@ The main model continues to plan, generate answers, and call native tools. The p
 
 This is an independent community project, not an official DeepSeek or Jev release. It is an early-stage plugin tested with **DSH 0.1.7-rc.2**; its APIs and model judgments are not a correctness guarantee.
 
-> **Fork note (huohua-dev):** this fork pins the DSH peers to **0.2.0-rc.2** so the plugin installs on DSH desktop 0.2.0-rc.2 without a compatibility exemption, and Skill selection skips Jev while every model-invocable skill fits within `skillLimit` (the native catalog is published unchanged). Host packages used by Skill selection are byte-identical between 0.1.7-rc.2 and 0.2.0-rc.2; the other features have only been checked by the offline test suite on 0.2.0-rc.2. Install from `https://github.com/huohua-dev/dsh-jev-plugin`.
+> **Fork note (huohua-dev):** this fork pins the DSH peers to **0.2.0-rc.2** so the plugin installs on DSH desktop 0.2.0-rc.2 without a compatibility exemption, and Skill selection shows only skills whose relevance probability reaches `skillMinProbability` (0.5), up to `skillLimit`, so a request such as a greeting can publish zero skill summaries. Host packages used by Skill selection are byte-identical between 0.1.7-rc.2 and 0.2.0-rc.2; the other features have only been checked by the offline test suite on 0.2.0-rc.2. Install from `https://github.com/huohua-dev/dsh-jev-plugin`.
 
 The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to Jev, and the observed test cases and limits.
 
@@ -133,7 +133,7 @@ Open the authenticated Web address printed by DSH. Configure your main model thr
 
 The main agent's provider and the Jev judgment connection are separate. A credential marked “configured” is not a successful connectivity test. Connection tests and enabled judgments make requests to your provider.
 
-Selection defaults are 5 skill summaries, at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. A larger glob skips Jev rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps and a pause after 3 native goal rounds without progress. These values can be changed without enabling the features.
+Selection defaults are at most 5 skill summaries with relevance probability of at least 0.5 (possibly none), at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. A larger glob skips Jev rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps and a pause after 3 native goal rounds without progress. These values can be changed without enabling the features.
 
 Long-log and test-log admission have independent switches, both off by default. Generic command logs start at 6,000 Unicode code points and recognized test logs at 4,000. The default omit-probability threshold is 0.8 and the judgment wait limit is 4 seconds. The settings page exposes these and the other admission budgets without enabling either feature.
 

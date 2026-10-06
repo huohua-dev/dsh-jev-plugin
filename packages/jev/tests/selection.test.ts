@@ -47,11 +47,17 @@ interface Fixture {
   requests: JevRequest[]
   receipts: JevActionReceipt[]
   enabled: Record<string, boolean>
-  settings: { skillLimit: ReturnType<typeof createVolatile<number>>; fileCandidates: ReturnType<typeof createVolatile<number>>; fileLimit: ReturnType<typeof createVolatile<number>> }
+  settings: {
+    skillLimit: ReturnType<typeof createVolatile<number>>; skillMinProbability: ReturnType<typeof createVolatile<number>>
+    fileCandidates: ReturnType<typeof createVolatile<number>>; fileLimit: ReturnType<typeof createVolatile<number>>
+  }
   judge: ReturnType<typeof vi.fn<(options: JevJudgeOptions) => Promise<JevJudgeResult>>>
 }
 
-async function fixture(counts = { skillLimit: 1, fileCandidates: 40, fileLimit: 1 }, withSpill = true): Promise<Fixture> {
+async function fixture(
+  counts: { skillLimit: number; skillMinProbability?: number; fileCandidates: number; fileLimit: number } = { skillLimit: 1, fileCandidates: 40, fileLimit: 1 },
+  withSpill = true,
+): Promise<Fixture> {
   const root = await mkdtemp(join(tmpdir(), 'jev-selection-hook-'))
   cleanup.push(() => rm(root, { recursive: true, force: true }))
   const ctx = new Context()
@@ -85,6 +91,7 @@ async function fixture(counts = { skillLimit: 1, fileCandidates: 40, fileLimit: 
   } as never)
   const settings = {
     skillLimit: createVolatile(counts.skillLimit),
+    skillMinProbability: createVolatile(counts.skillMinProbability ?? 0.5),
     fileCandidates: createVolatile(counts.fileCandidates),
     fileLimit: createVolatile(counts.fileLimit),
   }
@@ -141,7 +148,11 @@ async function invoke(ctx: Context, agent: Agent, name: string, args: object) {
 
 describe('selection hooks through host plugin paths', () => {
   it('validates counts and publishes partial skill summaries with recovery on each new user request', async () => {
-    expect(() => Config({ skillLimit: 0, fileCandidates: 40, fileLimit: 12 })).toThrow()
+    expect(() => Config({ skillLimit: 0, skillMinProbability: 0.5, fileCandidates: 40, fileLimit: 12 })).toThrow()
+    for (const skillMinProbability of [-0.1, 1.1]) {
+      expect(() => Config({ skillLimit: 5, skillMinProbability, fileCandidates: 40, fileLimit: 12 })).toThrow()
+    }
+    expect(Config({ skillLimit: 5, fileCandidates: 40, fileLimit: 12 } as never).skillMinProbability.get()).toBe(0.5)
     const { ctx, agent, requests } = await fixture()
     ctx.skills.register({ name: 'alpha', description: 'Alpha summary', source: 'runtime', content: 'ALPHA BODY' })
     ctx.skills.register({ name: 'beta', description: 'Beta summary', source: 'runtime', content: 'BETA BODY' })
@@ -152,7 +163,7 @@ describe('selection hooks through host plugin paths', () => {
     if (first.kind !== 'enter') return
     const selected = first.messages.find(message => message.source.kind === 'jev-skill-catalog')
     const text = selected?.content[0]?.type === 'text' ? selected.content[0].text : ''
-    expect(text).toMatchInlineSnapshot(`"<system-reminder>\nJev selected the top 1 of 2 model-invocable skills. These 1 new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.\n<available_skills>\n- beta: Beta summary (relevance probability 0.9)\n</available_skills>\nCall the skill tool with an exact name before following its instructions. This is a partial catalog; call skill_catalog to see every currently model-invocable skill summary. A user may invoke an eligible skill directly.\n</system-reminder>"`)
+    expect(text).toMatchInlineSnapshot(`"<system-reminder>\nJev selected 1 of 2 model-invocable skills with relevance probability at least 0.5. These 1 new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.\n<available_skills>\n- beta: Beta summary (relevance probability 0.9)\n</available_skills>\nCall the skill tool with an exact name before following its instructions. This is a partial catalog; call skill_catalog to see every currently model-invocable skill summary. A user may invoke an eligible skill directly.\n</system-reminder>"`)
     expect(JSON.stringify(requests)).not.toContain('BODY')
     const ordinary = await step(ctx, agent)
     expect(ordinary.kind === 'enter' && ordinary.messages.some(message => message.source.kind === 'skill-catalog')).toBe(false)
@@ -273,8 +284,8 @@ describe('selection hooks through host plugin paths', () => {
     expect(requests).toHaveLength(1)
   })
 
-  it('keeps low relevance probabilities and shows confidence only when supplied', async () => {
-    const { ctx, agent, judge, requests } = await fixture({ skillLimit: 2, fileCandidates: 40, fileLimit: 12 })
+  it('keeps low relevance probabilities at a zero threshold and shows confidence only when supplied', async () => {
+    const { ctx, agent, judge, requests } = await fixture({ skillLimit: 2, skillMinProbability: 0, fileCandidates: 40, fileLimit: 12 })
     ctx.skills.register({ name: 'alpha', description: 'Alpha', source: 'runtime', content: 'Body A' })
     ctx.skills.register({ name: 'beta', description: 'Beta', source: 'runtime', content: 'Body B' })
     ctx.skills.register({ name: 'zzz-filler', description: 'Filler', source: 'runtime', content: 'Filler body' })
@@ -360,7 +371,7 @@ describe('selection hooks through host plugin paths', () => {
   })
 
   it('adds only new top-ranked skill names across requests and records all-repeat as no publication', async () => {
-    const { ctx, agent, judge, requests, receipts } = await fixture({ skillLimit: 3, fileCandidates: 40, fileLimit: 12 })
+    const { ctx, agent, judge, requests, receipts } = await fixture({ skillLimit: 3, skillMinProbability: 0, fileCandidates: 40, fileLimit: 12 })
     for (const name of ['alpha', 'beta', 'gamma', 'delta']) {
       ctx.skills.register({ name, description: name + ' summary', source: 'runtime', content: name + ' body' })
     }
@@ -456,25 +467,41 @@ describe('selection hooks through host plugin paths', () => {
     expect(requests).toHaveLength(3)
   })
 
-  it('keeps the host catalog without Jev while every model-invocable skill fits within skillLimit', async () => {
-    const { ctx, agent, requests, receipts, settings } = await fixture({ skillLimit: 2, fileCandidates: 40, fileLimit: 12 })
+  it('publishes zero skills for an unrelated request, even when the catalog fits within skillLimit', async () => {
+    const { ctx, agent, judge, requests, receipts, settings } = await fixture({ skillLimit: 5, fileCandidates: 40, fileLimit: 12 })
     ctx.skills.register({ name: 'alpha', description: 'Alpha', source: 'runtime', content: 'Body A' })
     ctx.skills.register({ name: 'beta', description: 'Beta', source: 'runtime', content: 'Body B' })
-    const within = await step(ctx, agent, [user('Use any skill')])
-    const native = within.kind === 'enter' ? within.messages.find(message => message.source.kind === 'skill-catalog') : undefined
-    expect(native?.source.kind === 'skill-catalog' && native.source.entries.map(entry => entry.name)).toEqual(['alpha', 'beta'])
-    expect(within.kind === 'enter' && within.messages.some(message => message.source.kind === 'jev-skill-catalog')).toBe(false)
-    expect(requests).toHaveLength(0)
-    expect(receipts).toHaveLength(0)
-    ctx.skills.register({ name: 'gamma', description: 'Gamma', source: 'runtime', content: 'Body G' })
-    const above = await step(ctx, agent, [user('Another task')])
-    expect(above.kind === 'enter' && above.messages.some(message => message.source.kind === 'skill-catalog')).toBe(false)
+    judge.mockImplementation(async options => {
+      const request = await options.refresh(options.signal ?? new AbortController().signal)
+      requests.push(request)
+      const context = JSON.stringify(request.state)
+      return { kind: 'ok', operationId: 'selection-' + requests.length, attemptId: 'attempt', response: {
+        answers: request.questions.map(question => ({ id: question.id, kind: 'noul',
+          probability: context.includes('beta') && String(question.prompt).includes('Skill: beta.') ? 0.9 : 0.09 })),
+      } }
+    })
+    const hasCatalog = (decision: PreStepDecision) => decision.kind === 'enter' && decision.messages.some(message =>
+      message.source.kind === 'skill-catalog' || message.source.kind === 'jev-skill-catalog')
+    const greeting = await step(ctx, agent, [user('你好')])
+    expect(greeting.kind).toBe('enter')
+    expect(hasCatalog(greeting)).toBe(false)
     expect(requests).toHaveLength(1)
-    updateVolatile(settings.skillLimit, createVolatile(3))
-    const raised = await step(ctx, agent, [user('Third task')])
-    const update = raised.kind === 'enter' ? raised.messages.find(message => message.source.kind === 'skill-catalog') : undefined
-    expect(update?.source.kind === 'skill-catalog' && update.source.entries.map(entry => entry.name))
-      .toEqual(['alpha', 'beta', 'gamma'])
+    expect(receipts.map(item => item.id)).toEqual(['skill-catalog-none-relevant'])
+    expect(receipts[0]?.reason).toBe('No skill reached relevance probability 0.5')
+    // Ordinary tool steps neither re-judge nor let the full host catalog back in.
+    expect(hasCatalog(await step(ctx, agent))).toBe(false)
     expect(requests).toHaveLength(1)
+    // The complete catalog stays reachable on demand.
+    const all = await invoke(ctx, agent, 'skill_catalog', {})
+    expect(all.isError).toBe(false)
+    const relevant = await step(ctx, agent, [user('Use the beta skill')])
+    const catalog = relevant.kind === 'enter' ? relevant.messages.find(message => message.source.kind === 'jev-skill-catalog') : undefined
+    expect(catalog?.source.kind === 'jev-skill-catalog' && catalog.source.entries.map(entry => entry.name)).toEqual(['beta'])
+    expect(receipts.map(item => item.id)).toEqual(['skill-catalog-none-relevant', 'skill-catalog-published'])
+    // A zero threshold restores plain top-N ranking.
+    updateVolatile(settings.skillMinProbability, createVolatile(0))
+    const unfiltered = await step(ctx, agent, [user('你好')])
+    const rest = unfiltered.kind === 'enter' ? unfiltered.messages.find(message => message.source.kind === 'jev-skill-catalog') : undefined
+    expect(rest?.source.kind === 'jev-skill-catalog' && rest.source.entries.map(entry => entry.name)).toEqual(['alpha'])
   })
 })

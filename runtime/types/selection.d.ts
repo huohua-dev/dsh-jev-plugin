@@ -4,6 +4,7 @@ import type { SelectionConfigValues } from './selection-types.ts';
 /** Profile counts edited through the Jev Web page. */
 export interface Config {
     skillLimit: Volatile<number>;
+    skillMinProbability: Volatile<number>;
     fileCandidates: Volatile<number>;
     fileLimit: Volatile<number>;
 }

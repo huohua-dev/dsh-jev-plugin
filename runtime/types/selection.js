@@ -8,6 +8,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools';
 import { JevError } from "./index.js";
 export const Config = s.object({
     skillLimit: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(5).volatile(),
+    skillMinProbability: s.number().min(0).max(1).default(0.5).volatile(),
     fileCandidates: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(40).volatile(),
     fileLimit: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(12).volatile(),
 });
@@ -16,6 +17,11 @@ class RankingConditionsChanged extends Error {
 function positive(value, name) {
     if (!Number.isSafeInteger(value) || value < 1)
         throw new Error(name + ' must be a positive safe integer');
+    return value;
+}
+function ratio(value, name) {
+    if (!Number.isFinite(value) || value < 0 || value > 1)
+        throw new Error(name + ' must be between 0 and 1');
     return value;
 }
 function liveRoot(ctx, agent) {
@@ -108,7 +114,7 @@ function ranked(items, response) {
 function question(index, prompt) {
     return { id: 'candidate-' + index, kind: 'noul', prompt };
 }
-function selectedCatalog(items, fullFingerprint, total, selectedCount) {
+function selectedCatalog(items, fullFingerprint, total, selectedCount, minProbability) {
     const entries = items.map(({ item }) => ({ name: item.name, description: item.description }));
     const lines = items.map(({ item, probability, confidence }) => '- ' + item.name + ': ' + escapeText(item.description) + ' (relevance probability ' + probability
         + (confidence === undefined ? '' : ', confidence ' + confidence) + ')');
@@ -116,7 +122,7 @@ function selectedCatalog(items, fullFingerprint, total, selectedCount) {
         source: { kind: 'jev-skill-catalog', form: 'catalog', entries, fullFingerprint },
         content: [{ type: 'text', text: [
                     '<system-reminder>',
-                    'Jev selected the top ' + selectedCount + ' of ' + total + ' model-invocable skills. These ' + items.length + ' new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.',
+                    'Jev selected ' + selectedCount + ' of ' + total + ' model-invocable skills with relevance probability at least ' + minProbability + '. These ' + items.length + ' new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.',
                     '<available_skills>', ...lines, '</available_skills>',
                     'Call the skill tool with an exact name before following its instructions. This is a partial catalog; call skill_catalog to see every currently model-invocable skill summary. A user may invoke an eligible skill directly.',
                     '</system-reminder>',
@@ -204,11 +210,7 @@ export function apply(ctx, config) {
         const skills = snapshot.skills.filter(isModelInvocable);
         if (skills.length === 0)
             return decision;
-        // A ranking cannot omit anything when every skill fits within the limit, so keep the host catalog and skip Jev.
-        if (skills.length <= positive(config.skillLimit.get(), 'skillLimit')) {
-            checkedDirectories.delete(agent);
-            return decision;
-        }
+        // Every catalog size is judged: even a small catalog may hold no skill relevant to the task (for example a greeting).
         const fullFingerprint = fingerprint(skills.map(({ name, description }) => ({ name, description })));
         const prior = latestSelectedCatalog(agent);
         const checked = checkedDirectories.get(agent);
@@ -225,6 +227,7 @@ export function apply(ctx, config) {
         let current = skills;
         let currentFingerprint = fullFingerprint;
         let currentLimit = positive(config.skillLimit.get(), 'skillLimit');
+        let currentMinProbability = ratio(config.skillMinProbability.get(), 'skillMinProbability');
         const makeRequest = () => ({ state: { context: taskContext(agent, messages) },
             questions: current.map((skill, index) => question(index, 'Would this skill help the task? Skill: ' + skill.name + '. Description: ' + skill.description)) });
         const initial = makeRequest();
@@ -244,6 +247,7 @@ export function apply(ctx, config) {
                     throw new Error('No skills remain available');
                 currentFingerprint = fingerprint(current.map(({ name, description }) => ({ name, description })));
                 currentLimit = positive(config.skillLimit.get(), 'skillLimit');
+                currentMinProbability = ratio(config.skillMinProbability.get(), 'skillMinProbability');
                 return makeRequest();
             },
             interpret: response => validAnswers(current, response)
@@ -251,19 +255,22 @@ export function apply(ctx, config) {
         });
         if (outcome.kind !== 'ok')
             throw new JevError('CANCELLED', 'Skill selection was cancelled or could not be adopted');
-        const chosen = ranked(current, outcome.response).slice(0, currentLimit);
+        // The limit is only a ceiling: when no skill reaches the threshold, zero summaries are published.
+        const chosen = ranked(current, outcome.response)
+            .filter(({ probability }) => probability >= currentMinProbability).slice(0, currentLimit);
         const existing = injectedSkillNames(agent);
         const additions = chosen.filter(({ item }) => !existing.has(item.name));
         checkedDirectories.set(agent, {
             fingerprint: currentFingerprint, replaceGeneration: agent.session.surface.replaceGeneration,
         });
-        await ctx.jev.writeReceipt(outcome.operationId, {
-            id: additions.length === 0 ? 'skill-catalog-no-new' : 'skill-catalog-published',
-            status: 'observed', at: new Date().toISOString(),
-            ...additions.length === 0 ? { reason: 'All selected skill names were already visible in session catalogs' } : {},
-        });
+        await ctx.jev.writeReceipt(outcome.operationId, chosen.length === 0
+            ? { id: 'skill-catalog-none-relevant', status: 'observed', at: new Date().toISOString(),
+                reason: 'No skill reached relevance probability ' + currentMinProbability }
+            : { id: additions.length === 0 ? 'skill-catalog-no-new' : 'skill-catalog-published',
+                status: 'observed', at: new Date().toISOString(),
+                ...additions.length === 0 ? { reason: 'All selected skill names were already visible in session catalogs' } : {} });
         return replaceCatalog(decision, original, additions.length === 0
-            ? undefined : selectedCatalog(additions, currentFingerprint, current.length, chosen.length));
+            ? undefined : selectedCatalog(additions, currentFingerprint, current.length, chosen.length, currentMinProbability));
     }, { prepend: true });
     const globRankings = new Map();
     ctx.on('tools/result', exec => { globRankings.delete(exec.token); });
