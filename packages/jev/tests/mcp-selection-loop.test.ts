@@ -262,7 +262,9 @@ describe('native MCP selection through the published AgentLoop (offline)', () =>
     expect(h.agent.session.deriveMessages().some(message => message.role === 'user' && message.source.kind === 'jev-mcp-selection')).toBe(false)
   })
 
-  it.each(['ptc', 'both'] as const)('bypasses selection under the real %s presentation without connecting a service', async mode => {
+  // Harness 0.2.1-rc.1 removed the combined `both` tool presentation; ptc is the case that keeps the Host's
+  // own tools in front, and native selection is covered by the cases above.
+  it.each(['ptc'] as const)('bypasses selection under the real %s presentation without connecting a service', async mode => {
     const h = await fixture([text('Original presentation preserved')], { enabled: true, mode })
     await h.run('Find and fetch a document')
     expect(h.errors).toEqual([])
@@ -273,8 +275,7 @@ describe('native MCP selection through the published AgentLoop (offline)', () =>
     const tools = names(h.model.requests[0]!.tools)
     expect(tools).toContain('run_code')
     for (const name of MCP_NAMES) {
-      if (mode === 'both') expect(tools).toContain(name)
-      else expect(tools).not.toContain(name)
+      expect(tools).not.toContain(name)
       expect(JSON.stringify(h.model.requests[0]!.messages)).toContain(name) // real generated tools:sdk
     }
     expect(h.headers()[0]!.data.header.tools).toEqual(h.model.requests[0]!.tools)

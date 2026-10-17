@@ -240,7 +240,10 @@ describe('native MCP definition selection through public hooks', () => {
     expect(names(result).filter(isMcpPublicName)).toEqual([A, B])
     expect(f.agent.session.deriveMessages().some(m => m.role === 'user' && m.source.kind === 'jev-mcp-selection')).toBe(false)
   })
-  it.each(['ptc', 'both'] as const)('keeps %s wire definitions and SDK unchanged without Jev', async mode => {
+  // Harness 0.2.1-rc.1 removed the combined `both` tool presentation. Under `native`, enabling Jev also
+  // surfaces the mcp_catalog/mcp_load recovery tools, so this asserts the untouched wire definitions for
+  // ptc; native selection itself is covered by the cases above.
+  it.each(['ptc'] as const)('keeps %s wire definitions and SDK unchanged without Jev', async mode => {
     const f = await fixture(mode)
     f.enabled(false)
     const baseline = await f.assemble()

@@ -275,7 +275,16 @@ describe('selection hooks through host plugin paths', () => {
   })
 
   it('selects skills from the current directory after the native working_directory tool changes it', async () => {
-    const { ctx, agent, root, requests } = await fixture()
+    const { ctx, agent, root, requests, judge } = await fixture()
+    // Following the native live directory narrows the catalog to this provider alone, so the
+    // fixture's positional 0.1 for the first candidate would drop the very skill under test.
+    judge.mockImplementation(async options => {
+      const request = await options.refresh(options.signal ?? new AbortController().signal)
+      requests.push(request)
+      return { kind: 'ok', operationId: 'operation-' + requests.length, attemptId: 'attempt', response: {
+        answers: request.questions.map(question => ({ id: question.id, kind: 'noul', probability: 0.9 })),
+      } }
+    })
     await mkdir(join(root, 'changed'))
     const changed = await realpath(join(root, 'changed'))
     ctx.skills.registerProvider(() => ({
