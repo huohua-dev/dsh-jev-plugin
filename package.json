@@ -10,6 +10,10 @@
       "types": "./runtime/types/index.d.ts",
       "default": "./runtime/index.js"
     },
+    "./mcp-selection": {
+      "types": "./runtime/types/mcp-selection.d.ts",
+      "default": "./runtime/mcp-selection.js"
+    },
     "./selection": {
       "types": "./runtime/types/selection.d.ts",
       "default": "./runtime/selection.js"
