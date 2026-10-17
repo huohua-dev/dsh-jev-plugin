@@ -73,7 +73,7 @@
 
 ## 网页端安装（推荐）
 
-支持的 DSH 发布版本为 **0.1.7-rc.1、0.1.7-rc.2、0.2.0-rc.1、0.2.0-rc.2、0.2.1-alpha.2 和 0.2.1-alpha.3**。安装包声明 `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3`；其他版本，包括 0.2.1-alpha.1，不在声明范围内。直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
+兼容性验证覆盖的 DSH 发布版本为 **0.1.7-rc.1、0.1.7-rc.2、0.2.0-rc.1、0.2.0-rc.2、0.2.1-alpha.2、0.2.1-alpha.3、0.2.1-rc.1 和 0.2.1-rc.2**。安装包声明区间 `>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`：之后的 0.2.x 版本可直接安装、无需等插件逐个放行；0.3.0 起仍在声明范围外，须先验证。未列出的 0.2.x 版本属于「可安装但未逐个实测」；0.2.1-alpha.1 仍不在声明范围内。直接填写 GitHub 仓库地址即可，无需克隆源码、手动打包或登录 npm。
 
 1. 打开 **侧边栏「插件」→「添加插件」**。
 2. 在 **「包名或地址」** 中粘贴下面的 GitHub 地址，点击 **「安装」**。
@@ -100,13 +100,13 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 - 推荐 Node.js **24.11 或更高版本**；发布构建使用 Node 24.14.1 检查。
 - `PATH` 中可用的 pnpm **11.7.0**。
-- 开发基线：DeepSeek Harness CLI 和开发依赖 **0.2.1-alpha.2**，以及 Cordis **4.0.5-alpha.1**。这些精确构建版本与上面的安装兼容范围分开维护；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
+- 开发基线：DeepSeek Harness CLI 和开发依赖 **0.2.1-rc.2**，以及 Cordis **4.0.5**。这些精确构建版本与上面的安装兼容范围分开维护；请使用下面的精确版本号，npm 的 `latest` 标签可能指向另一版本。
 - 在 DSH 中配置好主模型，以及所选 Jev 兼容 System One 服务或 Luna API 的凭据。
 
 如尚未安装工具：
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-alpha.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-rc.2
 ```
 
 ### 构建安装包
@@ -200,7 +200,7 @@ dsh --profile jev
 
 仓库根目录是 GitHub 安装入口，`packages/jev` 保留开发源码；`pnpm run build` 会同步生成 `runtime/`，发布源码改动时应一并提交这些生成文件。
 
-[插件 CI](.github/workflows/ci.yml) 在拉取请求和推送到 `main` 时运行，使用 Node 24 和 `packageManager` 声明的 pnpm 版本。它依次运行 `pnpm install --frozen-lockfile`、`pnpm run typecheck`、`pnpm test` 和 `pnpm run build`，随后检查 `runtime/`，其中有修改、删除或新增文件时检查失败。提交拉取请求前，请构建并将更新后的 runtime 文件与源码改动一并提交。
+[插件 CI](.github/workflows/ci.yml) 在拉取请求和推送到 `main` 时运行，使用 Node 24 和 `packageManager` 声明的 pnpm 版本。它依次运行 `pnpm install --frozen-lockfile`、`pnpm run check:compat`、`pnpm run typecheck`、`pnpm test` 和 `pnpm run build`，随后检查 `runtime/`，其中有修改、删除或新增文件时检查失败。提交拉取请求前，请构建并将更新后的 runtime 文件与源码改动一并提交。
 
 Client CSS 构建用包内相对路径计算类名哈希，并对类名映射排序，使 runtime 比较不依赖 checkout 的绝对路径或 CSS 导出字段的遍历顺序。
 

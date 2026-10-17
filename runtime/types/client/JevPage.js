@@ -2,6 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 /** Jev bundle settings, feature catalogue, and bounded decision-record browser. */
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Button, SegmentedTabs, StateDot, Switch } from '@deepseek-ai/dsh-client-ui-primitives';
+import { McpSelectionSettings } from "./McpSelectionSettings.js";
 import { resolveConnectionIdentity } from "../types.js";
 import css from './JevPage.module.css';
 function featureName(feature, t) {
@@ -9,6 +10,8 @@ function featureName(feature, t) {
         return t('sharedFindingsName');
     if (feature.id === 'stage-navigation')
         return t('stageNavigationName');
+    if (feature.id === 'mcp-selection')
+        return t('mcpSelectionName');
     return feature.name;
 }
 function featureDescription(feature, t) {
@@ -16,6 +19,8 @@ function featureDescription(feature, t) {
         return t('sharedFindingsDescription');
     if (feature.id === 'stage-navigation')
         return t('stageNavigationDescription');
+    if (feature.id === 'mcp-selection')
+        return t('mcpSelectionDescription');
     return feature.description;
 }
 function recordFeatureName(features, featureId, t) {
@@ -59,14 +64,24 @@ export function JevPage(props) {
                     { value: 'settings', label: t('settings'), id: 'jev-settings-tab', panelId: 'jev-settings-panel' },
                     { value: 'records', label: t('records'), id: 'jev-records-tab', panelId: 'jev-records-panel' },
                 ], value: tab, onChange: setTab, className: css.tabs }), tab === 'settings'
-                ? _jsxs("div", { id: "jev-settings-panel", role: "tabpanel", "aria-labelledby": "jev-settings-tab", className: css.panel, children: [_jsx(SettingsPanel, { form: props.form, jev: props.jev, notifySuccess: props.notifySuccess, t: t }), props.supervisionForm && _jsx(SupervisionSettings, { form: props.supervisionForm, notifySuccess: props.notifySuccess, t: t }), props.selectionForm && _jsx(SelectionSettings, { form: props.selectionForm, notifySuccess: props.notifySuccess, t: t }), props.outputAdmissionForm && _jsx(OutputAdmissionSettings, { form: props.outputAdmissionForm, notifySuccess: props.notifySuccess, t: t }), props.stageNavigationForm && _jsx(StageNavigationSettings, { form: props.stageNavigationForm, notifySuccess: props.notifySuccess, t: t })] })
+                ? _jsxs("div", { id: "jev-settings-panel", role: "tabpanel", "aria-labelledby": "jev-settings-tab", className: css.panel, children: [_jsx(SettingsPanel, { form: props.form, jev: props.jev, notifySuccess: props.notifySuccess, t: t }), props.supervisionForm && _jsx(SupervisionSettings, { form: props.supervisionForm, notifySuccess: props.notifySuccess, t: t }), props.selectionForm && _jsx(SelectionSettings, { form: props.selectionForm, notifySuccess: props.notifySuccess, t: t }), props.mcpSelectionForm && _jsx(McpSelectionSettings, { form: props.mcpSelectionForm, notifySuccess: props.notifySuccess, t: t }), props.outputAdmissionForm && _jsx(OutputAdmissionSettings, { form: props.outputAdmissionForm, notifySuccess: props.notifySuccess, t: t }), props.stageNavigationForm && _jsx(StageNavigationSettings, { form: props.stageNavigationForm, notifySuccess: props.notifySuccess, t: t })] })
                 : _jsx("div", { id: "jev-records-panel", role: "tabpanel", "aria-labelledby": "jev-records-tab", children: _jsx(RecordsPanel, { jev: props.jev, t: t }) })] }));
 }
 const SELECTION_FIELDS = [
     { key: 'skillLimit', label: 'skillSummaryCount' },
+    { key: 'skillMinProbability', label: 'skillMinProbability', ratio: true },
     { key: 'fileCandidates', label: 'fileRankingMaximum' },
     { key: 'fileLimit', label: 'rankedPathCount' },
 ];
+function selectionDraft(value) {
+    return Object.fromEntries(SELECTION_FIELDS.map(({ key }) => [key, String(value[key])]));
+}
+function parseRatio(value) {
+    if (value.trim() === '')
+        return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1 ? parsed : null;
+}
 function parsePositiveInteger(value) {
     if (!/^[1-9]\d*$/.test(value))
         return null;
@@ -215,7 +230,7 @@ function SelectionSettings({ form, notifySuccess, t }) {
     const subscribe = useCallback((listener) => form.subscribe(listener), [form]);
     const getSnapshot = useCallback(() => form.getSnapshot(), [form]);
     const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-    const [draft, setDraft] = useState({ skillLimit: '', fileCandidates: '', fileLimit: '' });
+    const [draft, setDraft] = useState({ skillLimit: '', skillMinProbability: '', fileCandidates: '', fileLimit: '' });
     const [errors, setErrors] = useState({});
     const [saveError, setSaveError] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -225,11 +240,7 @@ function SelectionSettings({ form, notifySuccess, t }) {
     useEffect(() => {
         if (snapshot.value === undefined)
             return;
-        const next = {
-            skillLimit: String(snapshot.value.skillLimit),
-            fileCandidates: String(snapshot.value.fileCandidates),
-            fileLimit: String(snapshot.value.fileLimit),
-        };
+        const next = selectionDraft(snapshot.value);
         const signature = JSON.stringify(next);
         if (signature === observed.current)
             return;
@@ -251,8 +262,8 @@ function SelectionSettings({ form, notifySuccess, t }) {
     const save = async () => {
         const parsed = {};
         const nextErrors = {};
-        for (const { key } of SELECTION_FIELDS) {
-            const value = parsePositiveInteger(draft[key]);
+        for (const { key, ratio } of SELECTION_FIELDS) {
+            const value = ratio ? parseRatio(draft[key]) : parsePositiveInteger(draft[key]);
             if (value === null)
                 nextErrors[key] = true;
             else
@@ -269,7 +280,7 @@ function SelectionSettings({ form, notifySuccess, t }) {
             if (accepted) {
                 const saved = form.getSnapshot().value;
                 if (saved !== undefined) {
-                    setDraft({ skillLimit: String(saved.skillLimit), fileCandidates: String(saved.fileCandidates), fileLimit: String(saved.fileLimit) });
+                    setDraft(selectionDraft(saved));
                     edited.current = false;
                 }
                 notifySuccess(t('selectionCountSaved'));
@@ -284,7 +295,7 @@ function SelectionSettings({ form, notifySuccess, t }) {
             setSaving(false);
         }
     };
-    return _jsxs("section", { className: css.section, "aria-label": t('selectionCounts'), children: [_jsx("h3", { className: css.heading, children: t('selectionCounts') }), _jsx("p", { className: css.hint, children: t('selectionCountsHint') }), snapshot.status === 'loading' && current === undefined && _jsx(Loading, { label: t('loading') }), snapshot.status === 'unavailable' && _jsx("p", { className: css.notice, children: t('unavailable') }), current !== undefined && _jsxs("div", { className: css.form, children: [_jsx("div", { className: css.filters, children: SELECTION_FIELDS.map(({ key, label }) => _jsxs("div", { className: css.field, children: [_jsx("label", { htmlFor: `jev-selection-${key}`, children: t(label) }), _jsx("input", { id: `jev-selection-${key}`, type: "text", inputMode: "numeric", value: draft[key], "aria-invalid": errors[key] || undefined, "aria-describedby": errors[key] ? `jev-selection-${key}-error` : undefined, disabled: !snapshot.writable || saving, onChange: event => { edit(key, event.target.value); } }), errors[key] && _jsx("span", { id: `jev-selection-${key}-error`, role: "alert", className: css.notice, children: t('selectionCountInvalid') })] }, key)) }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { variant: "primary", disabled: !snapshot.writable || saving || !dirty, onClick: () => { void save(); }, children: saving ? t('saving') : t('saveSelectionCounts') }), !snapshot.writable && _jsx("span", { className: css.hint, children: t('readOnly') })] }), saveError && _jsx("p", { role: "alert", className: css.notice, children: t('selectionCountSaveFailed') })] })] });
+    return _jsxs("section", { className: css.section, "aria-label": t('selectionCounts'), children: [_jsx("h3", { className: css.heading, children: t('selectionCounts') }), _jsx("p", { className: css.hint, children: t('selectionCountsHint') }), snapshot.status === 'loading' && current === undefined && _jsx(Loading, { label: t('loading') }), snapshot.status === 'unavailable' && _jsx("p", { className: css.notice, children: t('unavailable') }), current !== undefined && _jsxs("div", { className: css.form, children: [_jsx("div", { className: css.filters, children: SELECTION_FIELDS.map(({ key, label, ratio }) => _jsxs("div", { className: css.field, children: [_jsx("label", { htmlFor: `jev-selection-${key}`, children: t(label) }), _jsx("input", { id: `jev-selection-${key}`, type: "text", inputMode: ratio ? 'decimal' : 'numeric', value: draft[key], "aria-invalid": errors[key] || undefined, "aria-describedby": errors[key] ? `jev-selection-${key}-error` : undefined, disabled: !snapshot.writable || saving, onChange: event => { edit(key, event.target.value); } }), errors[key] && _jsx("span", { id: `jev-selection-${key}-error`, role: "alert", className: css.notice, children: t(ratio ? 'selectionProbabilityInvalid' : 'selectionCountInvalid') })] }, key)) }), _jsxs("div", { className: css.actions, children: [_jsx(Button, { variant: "primary", disabled: !snapshot.writable || saving || !dirty, onClick: () => { void save(); }, children: saving ? t('saving') : t('saveSelectionCounts') }), !snapshot.writable && _jsx("span", { className: css.hint, children: t('readOnly') })] }), saveError && _jsx("p", { role: "alert", className: css.notice, children: t('selectionCountSaveFailed') })] })] });
 }
 const SUPERVISION_FIELDS = [
     { key: 'driftInterval', label: 'driftInterval' },

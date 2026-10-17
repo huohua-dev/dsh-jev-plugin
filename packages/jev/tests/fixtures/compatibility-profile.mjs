@@ -140,7 +140,7 @@ export function apply(ctx) {
     return item
   }
   async function run() {
-    results.hostRows = await until(rows, value => value.length === 9 && value.every(row => row.state === 2), 'all nine Jev Host rows ACTIVE')
+    results.hostRows = await until(rows, value => value.length === 10 && value.every(row => row.state === 2), 'all ten Jev Host rows ACTIVE')
     const manifest = JSON.parse(await readFile(new URL('../node_modules/@dsh-jev/plugin/package.json', import.meta.url), 'utf8'))
     results.hostExports = []
     for (const key of Object.keys(manifest.exports)) {

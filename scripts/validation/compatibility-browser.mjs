@@ -94,7 +94,10 @@ export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutM
       await page.waitForFunction(expected => {
         const panel = document.querySelector('#jev-settings-panel')
         const inputs = [...(panel?.querySelectorAll('input') ?? [])].map(input => input.value)
+        // Feature toggles are labelled "Enable/Disable <feature>"; settings
+        // sections may contain unrelated switches (for example MCP allow-zero).
         const switches = [...(panel?.querySelectorAll('[role="switch"]') ?? [])]
+          .filter(control => /^(Enable|Disable|启用|禁用) /.test(control.getAttribute('aria-label') ?? ''))
         return inputs.includes(expected.endpoint) && inputs.includes(expected.model) && inputs.includes(String(expected.timeoutMs))
           && switches.length === expected.featureCount && switches.every(control => control.getAttribute('aria-checked') === 'true')
       }, { endpoint, model, timeoutMs, featureCount })
@@ -104,8 +107,8 @@ export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutM
         baseUrl: await settings.getByRole('textbox', { name: /^(Service address|服务地址)$/ }).inputValue(),
         model: await settings.getByRole('textbox', { name: /^(Model|模型)$/ }).inputValue(),
         timeoutMs: Number(await settings.getByRole('spinbutton', { name: /^(Timeout \(ms\)|超时（毫秒）)$/ }).inputValue()),
-        featureCount: await settings.getByRole('switch').count(),
-        enabledFeatureCount: await settings.locator('[role="switch"][aria-checked="true"]').count(),
+        featureCount: await settings.getByRole('switch', { name: /^(Enable|Disable|启用|禁用) / }).count(),
+        enabledFeatureCount: await settings.getByRole('switch', { name: /^(Enable|Disable|启用|禁用) / }).evaluateAll(nodes => nodes.filter(node => node.getAttribute('aria-checked') === 'true').length),
       }
       phase = 'jev-records'
       await page.locator('#jev-records-tab').click()

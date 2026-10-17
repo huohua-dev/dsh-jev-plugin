@@ -137,7 +137,7 @@ for (const version of versions) {
       { id: 'session-title-llm', disabled: true },
       { id: 'session-telemetry-otel', config: { mode: 'DISABLED' } },
       { id: 'skill-filesystem', config: { includeDefaultRoots: true, customSkillDirs: [], bundledSkillDir: join(caseRoot, 'empty-bundled'), watch: false } },
-      { id: 'jev', config: { baseUrl: endpoint, model: 'fixture', credentialRef: 'JEV_COMPAT_KEY', timeoutMs: 5000, features: Object.fromEntries(['skill-selection', 'file-ranking', 'instruction-guidance', 'completion-check', 'drift-monitoring', 'goal-supervision', 'interjection-routing', 'shared-findings', 'output-admission', 'test-log-admission', 'workspace-approval', 'stage-navigation'].map(id => [id, true])) } },
+      { id: 'jev', config: { baseUrl: endpoint, model: 'fixture', credentialRef: 'JEV_COMPAT_KEY', timeoutMs: 5000, features: Object.fromEntries(['skill-selection', 'file-ranking', 'mcp-selection', 'instruction-guidance', 'completion-check', 'drift-monitoring', 'goal-supervision', 'interjection-routing', 'shared-findings', 'output-admission', 'test-log-admission', 'workspace-approval', 'stage-navigation'].map(id => [id, true])) } },
       { id: 'jev-supervision', config: { driftInterval: 1, evidenceChars: 1_000_000 } },
       { insert: [{ id: 'jev-compatibility-profile', name: fixturePath }] },
     ]
@@ -175,7 +175,7 @@ for (const version of versions) {
       while (!webUrl && !outcome && Date.now() < deadline) await new Promise(done => setTimeout(done, 50))
       if (!webUrl || !new URL(webUrl).searchParams.get('token')) throw new Error('Host did not print an authenticated loopback Web URL')
       phase = 'browser-check'
-      item.web = await checkCompatibilityBrowser({ url: webUrl, endpoint, model: 'fixture', timeoutMs: 5000, featureCount: 12 })
+      item.web = await checkCompatibilityBrowser({ url: webUrl, endpoint, model: 'fixture', timeoutMs: 5000, featureCount: 13 })
       if (!item.web.ok) throw new Error('Browser ' + item.web.phase + ' failed: ' + item.web.failure.message)
       if (outcome) throw new Error('Host exited during browser verification')
     }

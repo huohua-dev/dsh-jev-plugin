@@ -1,8 +1,8 @@
 ## 直接答案
 
-`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、九个 Jev Host 组件和真实 Web 客户端。默认版本取根 `package.json` 的 DSH 开发依赖，目前为 `0.2.1-alpha.2`。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
+`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、十个 Jev Host 组件和真实 Web 客户端。默认版本取根 `package.json` 的 DSH 开发依赖，目前为 `0.2.1-rc.2`。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
 
-`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all nine Jev Host components and the real Web client in a new disposable profile. The default comes from the root DSH development dependency, currently `0.2.1-alpha.2`. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
+`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all ten Jev Host components and the real Web client in a new disposable profile. The default comes from the root DSH development dependency, currently `0.2.1-rc.2`. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
 
 ## 准备与运行
 
@@ -32,9 +32,9 @@ Select another explicitly supported version, for example the legacy host `0.2.0-
 pnpm run test:compatibility --version 0.2.0-rc.2
 ```
 
-当前支持范围与五个已验证发布版本以[安装说明](../../../README.md#install-through-the-web-ui-recommended)为准。每次运行使用新的实验目录；需要保留的产物位于忽略的 `.artifacts/` 中。
+当前支持范围与已验证发布版本以[安装说明](../../../README.md#install-through-the-web-ui-recommended)为准。每次运行使用新的实验目录；需要保留的产物位于忽略的 `.artifacts/` 中。
 
-The [installation guide](../../../README.md#install-through-the-web-ui-recommended) owns the current support range and five released targets. Each run uses a new directory under ignored `.artifacts/`.
+The [installation guide](../../../README.md#install-through-the-web-ui-recommended) owns the current support range and exercised releases. Each run uses a new directory under ignored `.artifacts/`.
 
 ## 成功与失败的判定
 
@@ -48,9 +48,9 @@ While the Host is running, the browser opens its authenticated Web address, ente
 
 ## 更新支持版本
 
-DSH 升级时，先更新根包与 workspace 包中实际使用的精确开发依赖，按已验证兼容性维护两份 peer 声明和[安装说明](../../../README.md#install-through-the-web-ui-recommended)。将新目标加入[验证版本列表](../../../scripts/validation/compatibility-versions.mjs)，再运行默认命令与需要保留支持的各个精确旧版本；新版本和旧版本都通过后再提交声明与生成 runtime。
+DSH 升级时，运行 `node scripts/validation/bump-harness-version.mjs --target <exact version>` 更新两份清单的精确开发依赖、`pnpm-workspace.yaml` 年龄门排除并登记新验证版本；声明区间已覆盖 0.2.x 时无需为逐个版本改 peer（区间不够时才加 `--peer-range`）。然后运行 `pnpm install`、`pnpm run check:compat`、`pnpm run typecheck`、`pnpm test`、`pnpm run build` 和本 smoke，再按已验证兼容性维护[安装说明](../../../README.md#install-through-the-web-ui-recommended)；新版本和需要保留支持的旧版本都通过后再提交声明与生成 runtime。
 
-For a DSH upgrade, update the exact development dependencies in the root and workspace packages. Maintain both peer declarations and the [installation guide](../../../README.md#install-through-the-web-ui-recommended) from observed compatibility. Add the new target to the [verification version list](../../../scripts/validation/compatibility-versions.mjs), then run the default command and each older version retained in the support declaration. Commit the declarations and generated runtime after those checks pass.
+For a DSH upgrade, run `node scripts/validation/bump-harness-version.mjs --target <exact version>` to move both manifests' exact development dependencies, the `pnpm-workspace.yaml` release-age exclusions, and the [verification version list](../../../scripts/validation/compatibility-versions.mjs). The declared range already covers 0.2.x, so per-release peer edits are unnecessary (pass `--peer-range` only when the bound must move). Then run `pnpm install`, `pnpm run check:compat`, `pnpm run typecheck`, `pnpm test`, `pnpm run build`, and this smoke, and maintain the [installation guide](../../../README.md#install-through-the-web-ui-recommended) from observed compatibility. Commit the declarations and generated runtime after the new and retained older versions pass.
 
 ## 边界与验证
 

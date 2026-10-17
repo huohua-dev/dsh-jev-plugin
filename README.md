@@ -73,7 +73,7 @@ Each classification covers one complete DSH model step: its recorded reasoning, 
 
 ## Install through the Web UI (recommended)
 
-Supported DSH releases are **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2 and 0.2.1-alpha.3**. The package declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || 0.2.1-alpha.2 || 0.2.1-alpha.3`; other releases, including 0.2.1-alpha.1, are outside this declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+Compatibility validation exercises DSH **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2, 0.2.1-alpha.3, 0.2.1-rc.1 and 0.2.1-rc.2**. The package declares the range `>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`, so later 0.2.x releases are accepted by the installer without a plugin update, while 0.3.0 and later stay outside the declaration until validated; unlisted 0.2.x releases are accepted but not individually exercised. 0.2.1-alpha.1 remains outside the declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
@@ -100,13 +100,13 @@ Use the following steps when modifying or building the plugin yourself. Existing
 
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
-- Development baseline: DeepSeek Harness CLI and development packages **0.2.1-alpha.2**, with Cordis **4.0.5-alpha.1**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
+- Development baseline: DeepSeek Harness CLI and development packages **0.2.1-rc.2**, with Cordis **4.0.5**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
 - A configured main-model provider in DSH, plus credentials for your selected Jev-compatible System One service or Luna API.
 
 If needed, install the tools:
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-alpha.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-rc.2
 ```
 
 ### Build the package
@@ -200,7 +200,7 @@ The project is named `deepseek-harness-jev`; its internal package and import ide
 
 The repository root is the GitHub install entry; `packages/jev` retains development sources. `pnpm run build` also regenerates `runtime/`; commit these generated files when releasing source changes.
 
-[Plugin CI](.github/workflows/ci.yml) runs on pull requests and pushes to `main`, using Node 24 and the pnpm version declared in `packageManager`. It runs `pnpm install --frozen-lockfile`, `pnpm run typecheck`, `pnpm test`, and `pnpm run build`, then rejects changed, deleted, or new files under `runtime/`. Build and commit updated runtime files with source changes before opening a pull request.
+[Plugin CI](.github/workflows/ci.yml) runs on pull requests and pushes to `main`, using Node 24 and the pnpm version declared in `packageManager`. It runs `pnpm install --frozen-lockfile`, `pnpm run check:compat`, `pnpm run typecheck`, `pnpm test`, and `pnpm run build`, then rejects changed, deleted, or new files under `runtime/`. Build and commit updated runtime files with source changes before opening a pull request.
 
 The Client CSS build uses paths relative to the package for class-name hashes and sorts class mappings, so the runtime comparison does not depend on the checkout's absolute path or CSS export traversal order.
 

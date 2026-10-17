@@ -12,7 +12,7 @@ The [quick review directory](https://luobosibing2.github.io/dsh-jev-plugin/#quic
 
 The [2026-10-09–10 Harness compatibility report](docs/testing/2026-10-09-harness-compatibility/README.md) records official DSH 0.2.1-alpha.2 installation, Web smoke checks, and real DeepSeek Flash / Jev experiments, including retained failures and untested channels.
 
-The [2026-10-11 version compatibility report](docs/testing/2026-10-11-harness-version-compatibility/README.md) records five released DSH runtimes, official installation and local deterministic feature checks. The current [installation guide](README.md#install-through-the-web-ui-recommended) lists the supported range, which includes 0.2.1-alpha.3; the exact development baseline remains 0.2.1-alpha.2.
+The [2026-10-11 version compatibility report](docs/testing/2026-10-11-harness-version-compatibility/README.md) records five released DSH runtimes, official installation and local deterministic feature checks. The current [installation guide](README.md#install-through-the-web-ui-recommended) lists the declared range (`>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`) and the releases exercised by compatibility validation, through 0.2.1-rc.2; the exact development baseline is 0.2.1-rc.2.
 
 The [2026-10-07 Luna results](docs/testing/2026-10-07-luna-decisions/public-results.md) separate protocol/installation checks, controlled samples, and real main-model tasks. They retain the OpenRouter HTTP 403, two controlled approval misses, one later native approval success, log reduction, and ranking limits.
 
