@@ -1,4 +1,4 @@
-import { n as JevError } from "./types-s51osKhy.js";
+import { n as JevError } from "./types-Bf-UMMSE.js";
 import s from "@deepseek-ai/schemastery";
 import { createHash } from "node:crypto";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
@@ -24,6 +24,12 @@ function ratio(value, name) {
 }
 function liveRoot(ctx, agent) {
 	return agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+}
+/** Use the native live directory when available; legacy providers receive the Session's original directory or their default. */
+async function skillDirectory(ctx, agent, signal) {
+	if (agent === void 0) return void 0;
+	const directory = ctx.get("workingDirectory");
+	return directory === void 0 ? agent.session.header.cwd : directory.ensure(agent, signal);
 }
 function textOf(message) {
 	return message.content.filter((block) => block.type === "text").map((block) => block.text).join("\n").trim();
@@ -229,8 +235,9 @@ function apply(ctx, config) {
 			}]
 		},
 		async execute(_args, exec) {
+			const cwd = await skillDirectory(ctx, exec.agent, exec.signal);
 			const snapshot = await ctx.skills.snapshot({
-				cwd: exec.agent?.session.header.cwd,
+				cwd,
 				signal: exec.signal,
 				scope: exec.agent
 			});
@@ -252,8 +259,9 @@ function apply(ctx, config) {
 		}
 		if (ctx.tools.get("skill", agent) === void 0) return decision;
 		signal.throwIfAborted();
+		const cwd = await skillDirectory(ctx, agent, signal);
 		const snapshot = await ctx.skills.snapshot({
-			cwd: agent.session.header.cwd,
+			cwd,
 			signal,
 			scope: agent
 		});
@@ -290,8 +298,9 @@ function apply(ctx, config) {
 					first = false;
 					return initial;
 				}
+				const cwd = await skillDirectory(ctx, agent, retrySignal);
 				const refreshed = await ctx.skills.snapshot({
-					cwd: agent.session.header.cwd,
+					cwd,
 					signal: retrySignal,
 					scope: agent
 				});

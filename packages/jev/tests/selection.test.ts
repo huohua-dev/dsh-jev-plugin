@@ -1,9 +1,12 @@
 import { spawn as nodeSpawn } from 'node:child_process'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
+import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
 import AgentRegistry, { agentEvents, type Agent, type PreStepDecision } from '@deepseek-ai/dsh-agent'
 import { createAssistantMessage, createUserMessage, ToolCallId, type UserMessage } from '@deepseek-ai/dsh-llm'
@@ -12,8 +15,9 @@ import SkillRegistry from '@deepseek-ai/dsh-skill'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { applyGlobTool, applyGrepTool } from '@deepseek-ai/dsh-tool-fs-search'
 import * as toolSkill from '@deepseek-ai/dsh-tool-skill'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import { apply, Config } from '../src/selection.ts'
+import * as toolWorkingDirectory from '@deepseek-ai/dsh-tool-working-directory'
+import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import { apply, Config, inject } from '../src/selection.ts'
 import type { JevJudgeOptions, JevJudgeResult } from '../src/index.ts'
 import type { JevActionReceipt, JevRequest } from '../src/types.ts'
 
@@ -57,15 +61,23 @@ interface Fixture {
 async function fixture(
   counts: { skillLimit: number; skillMinProbability?: number; fileCandidates: number; fileLimit: number } = { skillLimit: 1, fileCandidates: 40, fileLimit: 1 },
   withSpill = true,
+  directory: { service?: boolean; sessionCwd?: boolean } = {},
 ): Promise<Fixture> {
   const root = await mkdtemp(join(tmpdir(), 'jev-selection-hook-'))
   cleanup.push(() => rm(root, { recursive: true, force: true }))
   const ctx = new Context()
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(LocalFileSystem, { cwd: root })
+  await ctx.plugin(SessionProjectionRegistry)
+  if (directory.service !== false) await ctx.plugin(WorkingDirectory)
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(SkillRegistry)
-  await ctx.plugin(toolSkill)
+  if (directory.service !== false) await ctx.plugin(toolSkill)
+  else ctx.tools.register(defineTool({ name: 'skill', description: 'Legacy host skill loader marker', parameters: {},
+    output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+    execute: () => 'legacy skill loader',
+  }))
   ctx.provide('subprocess', subprocess() as never)
   ctx.provide('settings', { configure: () => () => {} } as never)
   if (withSpill) ctx.provide('spillStore', { saveText: async () => ({
@@ -95,14 +107,15 @@ async function fixture(
     fileCandidates: createVolatile(counts.fileCandidates),
     fileLimit: createVolatile(counts.fileLimit),
   }
-  apply(ctx, settings)
+  await ctx.plugin({ inject, apply: (pluginCtx: Context) => apply(pluginCtx, settings) })
   applyGlobTool(ctx, { sampleOverCapGlobResults: false, maxResults: 100, maxMetaBytes: 65_536,
     rawOutputMaxBytes: 20_000_000, graceMs: 3_000, stderrMaxBytes: 64 * 1024, timeoutMs: 30_000 })
   applyGrepTool(ctx, { maxMatches: 100, maxLineBytes: 2_000, maxMetaBytes: 65_536,
     rawOutputMaxBytes: 20_000_000, graceMs: 3_000, stderrMaxBytes: 64 * 1024, timeoutMs: 30_000 })
   const id = SessionId('selection-' + root)
   const session = Session.create(id, undefined, {
-    version: SESSION_FORMAT_VERSION, id, createdAt: 0, cwd: root, isSeeded: false,
+    version: SESSION_FORMAT_VERSION, id, createdAt: 0,
+    ...directory.sessionCwd === false ? {} : { cwd: root }, isSeeded: false,
   })
   const agent = {
     ctx, id, options: {}, session, status: 'running', inbox: {} as Agent['inbox'],
@@ -147,6 +160,66 @@ async function invoke(ctx: Context, agent: Agent, name: string, args: object) {
 }
 
 describe('selection hooks through host plugin paths', () => {
+  it('uses each legacy Session directory without requiring a working-directory service', async () => {
+    const { ctx, agent, root, requests } = await fixture(undefined, true, { service: false })
+    const otherCwd = join(root, 'other')
+    await mkdir(otherCwd)
+    ctx.skills.registerProvider(() => ({ name: 'legacy-directories',
+      list: async ({ cwd }) => [{ name: cwd === otherCwd ? 'other-skill' : 'root-skill', description: String(cwd),
+        invocation: { modelInvocable: true, userInvocable: true }, source: 'custom', provider: 'legacy-directories', rank: 0, locator: cwd }],
+      get: async () => undefined,
+    }))
+    const otherId = SessionId('legacy-other-' + root)
+    const other = { ...agent, id: otherId, session: Session.create(otherId, [], {
+      version: SESSION_FORMAT_VERSION, id: otherId, createdAt: 0, cwd: otherCwd, isSeeded: false,
+    }) } as Agent
+    ctx.agents.enter(other, undefined)
+    await step(ctx, agent, [user('Choose root skill')])
+    await step(ctx, other, [user('Choose other skill')])
+    expect(requests).toHaveLength(2)
+    expect(requests[0]?.questions[0]?.prompt).toContain('root-skill')
+    expect(requests[0]?.questions[0]?.prompt).toContain(root)
+    expect(requests[1]?.questions[0]?.prompt).toContain('other-skill')
+    expect(requests[1]?.questions[0]?.prompt).toContain(otherCwd)
+    expect((await invoke(ctx, agent, 'skill_catalog', {})).value).toEqual({ skills: [{ name: 'root-skill', description: root }] })
+    expect((await invoke(ctx, other, 'skill_catalog', {})).value).toEqual({ skills: [{ name: 'other-skill', description: otherCwd }] })
+  })
+
+  it('leaves an unset legacy directory to the provider and reads a later directory service', async () => {
+    const { ctx, agent, root, requests } = await fixture(undefined, true, { service: false, sessionCwd: false })
+    const directories: Array<string | undefined> = []
+    ctx.skills.registerProvider(() => ({ name: 'legacy-default', list: async ({ cwd }) => {
+      directories.push(cwd)
+      return [{ name: 'skill', description: String(cwd), invocation: { modelInvocable: true, userInvocable: true },
+        source: 'custom', provider: 'legacy-default', rank: 0, locator: cwd }]
+    }, get: async () => undefined }))
+    await step(ctx, agent, [user('Choose default skill')])
+    expect(requests).toHaveLength(1)
+    await invoke(ctx, agent, 'skill_catalog', {})
+    expect(directories).toEqual([undefined])
+    await ctx.plugin(WorkingDirectory, { defaultDirectory: root })
+    const changed = join(root, 'changed')
+    await mkdir(changed)
+    const current = await ctx.workingDirectory.set(agent, changed)
+    const catalog = await invoke(ctx, agent, 'skill_catalog', {})
+    expect(catalog.isError).toBe(false)
+    expect(catalog.value).toEqual({ skills: [{ name: 'skill', description: current }] })
+    expect(directories.at(-1)).toBe(current)
+  })
+
+  it.each([new Error('Directory permission refused'), new DOMException('Directory inspection cancelled', 'AbortError')])(
+    'preserves an existing directory service failure without reading the legacy catalog: %s', async failure => {
+      const { ctx, agent, requests } = await fixture()
+      const snapshot = vi.spyOn(ctx.skills, 'snapshot')
+      vi.spyOn(ctx.workingDirectory, 'ensure').mockRejectedValueOnce(failure)
+      const result = await invoke(ctx, agent, 'skill_catalog', {})
+      expect(result.isError).toBe(true)
+      expect(JSON.stringify(result)).toContain(failure.message)
+      expect(snapshot).not.toHaveBeenCalled()
+      expect(requests).toHaveLength(0)
+    },
+  )
+
   it('validates counts and publishes partial skill summaries with recovery on each new user request', async () => {
     expect(() => Config({ skillLimit: 0, skillMinProbability: 0.5, fileCandidates: 40, fileLimit: 12 })).toThrow()
     for (const skillMinProbability of [-0.1, 1.1]) {
@@ -199,6 +272,37 @@ describe('selection hooks through host plugin paths', () => {
     const original = await step(noContext.ctx, noContext.agent)
     expect(original.kind === 'enter' && original.messages.some(message => message.source.kind === 'skill-catalog')).toBe(true)
     expect(noContext.requests).toHaveLength(0)
+  })
+
+  it('selects skills from the current directory after the native working_directory tool changes it', async () => {
+    const { ctx, agent, root, requests } = await fixture()
+    await mkdir(join(root, 'changed'))
+    const changed = await realpath(join(root, 'changed'))
+    ctx.skills.registerProvider(() => ({
+      name: 'directory-fixture',
+      list: async ({ cwd }) => [{
+        name: cwd === changed ? 'changed-skill' : 'original-skill',
+        description: cwd === changed ? 'Changed directory skill' : 'Original directory skill',
+        invocation: { modelInvocable: true, userInvocable: true }, source: 'custom',
+        provider: 'directory-fixture', rank: 0, locator: cwd,
+      }],
+      get: async () => undefined,
+    }))
+    await ctx.plugin(toolWorkingDirectory)
+    await step(ctx, agent, [user('Choose a skill for the current directory')])
+    expect(JSON.stringify(requests[0])).toContain('original-skill')
+    const moved = await invoke(ctx, agent, 'working_directory', { cd: 'changed' })
+    expect(moved.isError).toBe(false)
+    expect(moved.value).toEqual({ cwd: changed })
+    expect(agent.session.header.cwd).toBe(root)
+    const next = await step(ctx, agent)
+    expect(requests).toHaveLength(2)
+    expect(JSON.stringify(requests[1])).toContain('changed-skill')
+    expect(JSON.stringify(requests[1])).not.toContain('original-skill')
+    const catalog = next.kind === 'enter' ? next.messages.find(message => message.source.kind === 'jev-skill-catalog') : undefined
+    expect(catalog?.source).toMatchObject({ entries: [{ name: 'changed-skill', description: 'Changed directory skill' }] })
+    const full = await invoke(ctx, agent, 'skill_catalog', {})
+    expect(full.value).toEqual({ skills: [{ name: 'changed-skill', description: 'Changed directory skill' }] })
   })
 
   it('ranks the original glob output twice, preserves the structured paths and reports omitted results', async () => {
