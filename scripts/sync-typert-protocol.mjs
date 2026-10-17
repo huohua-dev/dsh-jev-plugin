@@ -3,11 +3,18 @@ import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 
 const reference = resolve('packages/typert-protocol-reference')
-const require = createRequire(resolve('packages/jev/package.json'))
+const pluginManifestPath = resolve('packages/jev/package.json')
+const require = createRequire(pluginManifestPath)
 const installed = dirname(require.resolve('@deepseek-ai/dsh-typert-protocol/package.json'))
 const manifest = JSON.parse(await readFile(join(installed, 'package.json'), 'utf8'))
-if (manifest.version !== '0.2.1-alpha.2') {
-  throw new Error(`Expected @deepseek-ai/dsh-typert-protocol@0.2.1-alpha.2, found ${manifest.version}`)
+// The plugin's own pin is the validated protocol release, so a Harness bump that
+// was never validated here fails loudly instead of copying an unreviewed copy.
+const expected = JSON.parse(await readFile(pluginManifestPath, 'utf8')).devDependencies?.['@deepseek-ai/dsh-typert-protocol']
+if (expected === undefined) {
+  throw new Error('packages/jev/package.json must declare devDependencies["@deepseek-ai/dsh-typert-protocol"]')
+}
+if (manifest.version !== expected) {
+  throw new Error(`Expected @deepseek-ai/dsh-typert-protocol@${expected}, found ${manifest.version}`)
 }
 
 const declarations = join(installed, 'lib/types')

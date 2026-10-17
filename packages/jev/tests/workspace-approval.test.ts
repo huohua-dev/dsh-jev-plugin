@@ -14,7 +14,7 @@ import { PtcRuntime, type PtcRunRequest, type PtcRunResult, type PtcRunSpec } fr
 import { ShellExecutor, type ShellExecRequest, type ShellExecSpec, type ShellExecution } from '@deepseek-ai/dsh-shell'
 import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
 import { SessionId } from '@deepseek-ai/dsh-session'
-import JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import Storage from '@deepseek-ai/dsh-storage'
 import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
