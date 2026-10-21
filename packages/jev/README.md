@@ -250,6 +250,10 @@ Drift and native Goal judgments retain recorded visible messages, tool results, 
 
 New user requirements, target goal revisions, cancellation, and task completion fence result adoption. A Host restart interrupts pending public ledger records and does not resume checks or native goal execution. Scope and timing tests use the published DSH 0.2.1-alpha.2 Agent loop, tool runtime, native goal driver, JSONL Session persistence, and local deterministic Jev HTTP responses. These tests establish integration and limits; they do not establish the quality of a paid judge model.
 
+## Interjection routing context
+
+The `jev-interjection-routing` row bounds history text with `contextChars` (default 12,000). It allocates text from newest to oldest, retains the end of an oversized message, and presents the selected excerpts in conversation order with excerpt markers. Collection stops as soon as the budget is exhausted. The limit covers history text, not the entire serialized request; the current message uses the independent `messageChars` limit (default 24,000), and any goal objective is separately bounded by `contextChars`. Original Session history remains unchanged.
+
 ## Non-interactive consumer API
 
 `ctx.jev.judgeOnce(options)` accepts `JevJudgeOnceOptions`, including `refresh`, `interpret`, `canAdopt`, and `signal`. Its `agent` is optional so authorized historical consumers do not need to create or borrow an Agent. Interactive `judge` still requires the actual live Agent for its human Retry/Cancel flow. It makes at most one attempt, opens no user question, and returns `ok`, `cancelled`, `not-adopted`, or `failed`. Only `ok` authorizes a consumer to consider adoption. `failed` contains a safe failure code and message; `operationId` is absent when the operation could not be created. A refresh failure records an operation-level failure without fabricating an HTTP attempt. Input-log failure sends no request, result-log failure returns no usable answer, and a failed receipt must not trigger repeated execution. The interactive `judge` retains manual Retry/Cancel behavior.

@@ -53,6 +53,8 @@
 
 所有功能共用连接、按 profile 保存的设置、判断记录与操作回执。多数 Agent 功能面向存活的 Web 主会话；向子 Agent 发送纠正，不等于子 Agent 自动拥有其他 Jev 增强。
 
+中途插话分流将历史文本限制在插件组件的 `contextChars` 预算内（默认 12,000 字符），优先取最新文本，再按对话顺序呈现。当前消息另用 `messageChars` 限制；原始 Session 历史仍保留。
+
 **功能分支不等于已合入 main。** 工具输出筛选已进入 `main`；`codex/jev-tool-output-admission` 保留开发快照。原生网页执行在 `codex/jev-native-web-execution`，该方向目前**暂停，普通网站效果未通过验收**。其他历史分支保留早期实现。切换前请看[分支状态](docs/branches.md)。
 
 ## 完成核查

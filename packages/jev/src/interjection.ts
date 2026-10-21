@@ -122,6 +122,7 @@ export function apply(ctx: Context, config: Config): void {
     const selected: Json[] = []
     let remaining = config.contextChars
     for (const item of history.toReversed()) {
+      if (remaining <= 0) break
       const itemText = item.content.filter(block => block.type === 'text').map(block => block.text).join('\n')
       if (!itemText) continue
       const excerpt = itemText.slice(-remaining)

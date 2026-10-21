@@ -53,6 +53,8 @@ The plugin provides the following features. **Every feature is independently dis
 
 All features share a connection, profile-scoped settings, decision records, and operation receipts. Most agent-facing features target live Web root sessions; correcting a child agent does not enable every feature inside that child.
 
+Interjection routing limits history text to the plugin row's `contextChars` budget (12,000 by default), taking the newest text first and presenting it in conversation order. The current message has a separate `messageChars` limit; original Session history is retained.
+
 **Feature branches are not all included in `main`.** Tool-output filtering is included in `main`; `codex/jev-tool-output-admission` preserves its development snapshot. Native web execution is on `codex/jev-native-web-execution` and is **paused; ordinary-site effectiveness has not passed acceptance**. Historical split branches preserve earlier work. See [branch status](docs/branches.md) before switching branches.
 
 ## Completion checks
