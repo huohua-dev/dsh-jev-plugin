@@ -4,7 +4,7 @@ import spawn from 'cross-spawn'
 import { createHash } from 'node:crypto'
 import { createWriteStream } from 'node:fs'
 import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises'
-import { join, resolve, sep } from 'node:path'
+import { basename, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { supportedVersions } from './compatibility-versions.mjs'
@@ -130,7 +130,8 @@ try {
   const tarball = join(packageRoot, pack.filename)
   const unpacked = join(packageRoot, 'unpacked')
   await mkdir(unpacked)
-  await command('unpack', 'tar', ['-xzf', tarball, '-C', unpacked])
+  // A relative archive name avoids GNU tar's drive-letter remote syntax and works with BSD tar too.
+  await command('unpack', 'tar', ['-xzf', basename(tarball), '-C', unpacked], packageRoot)
   const payload = join(unpacked, 'package')
   const packedManifest = JSON.parse(await readFile(join(payload, 'package.json'), 'utf8'))
   deepStrictEqual(packedManifest, manifest, 'The formal tarball manifest differs from this checkout')
