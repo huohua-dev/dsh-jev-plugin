@@ -116,7 +116,8 @@ describe('supervision through real AgentLoop, goal driver, tools and HTTP Jev', 
   it('pauses the native goal after three no-progress rounds without a second completion continuation', async () => {
     const h = await harness([text('same failure'), text('same failure'), text('same failure')], Array.from({ length: 3 }, () => answer('no-progress')), { 'goal-supervision': true, 'completion-check': true })
     h.ctx.goals.create(h.agent, { objective: 'Fix it', maxGoalRounds: 8 })
-    await vi.waitFor(() => expect(h.ctx.goals.get(h.agent)?.phase).toBe('paused'))
+    // Three serial goal rounds include real HTTP judgments and durable writes under parallel-suite load.
+    await vi.waitFor(() => expect(h.ctx.goals.get(h.agent)?.phase).toBe('paused'), { timeout: 3_000 })
     await h.agent.whenIdle()
     expect(h.ctx.goals.get(h.agent)?.roundsStarted).toBe(3)
     expect(h.model.requests).toHaveLength(3)

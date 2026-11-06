@@ -1,0 +1,289 @@
+{
+  "date": "2026-11-06",
+  "command": "pnpm audit --json",
+  "exitCode": 1,
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 3,
+      "moderate": 14,
+      "high": 7,
+      "critical": 0
+    },
+    "dependencies": 4,
+    "devDependencies": 889,
+    "optionalDependencies": 185,
+    "totalDependencies": 893
+  },
+  "advisories": [
+    {
+      "package": "fflate",
+      "severity": "moderate",
+      "title": "fflate unzipSync can enter an infinite loop when parsing malformed ZIP64 archives",
+      "versions": [
+        "0.8.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=0.8.3",
+      "url": "https://github.com/advisories/GHSA-px8p-9vwx-vf98"
+    },
+    {
+      "package": "vitest",
+      "severity": "moderate",
+      "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+      "versions": [
+        "4.1.8"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=4.1.11",
+      "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9"
+    },
+    {
+      "package": "@vitest/mocker",
+      "severity": "moderate",
+      "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+      "versions": [
+        "4.1.8"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=4.1.11",
+      "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9"
+    },
+    {
+      "package": "source-map-js",
+      "severity": "high",
+      "title": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+      "versions": [
+        "1.2.1"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=1.2.2",
+      "url": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q"
+    },
+    {
+      "package": "vite",
+      "severity": "moderate",
+      "title": "launch-editor: escapeCmdArgs() omits % escaping on Windows",
+      "versions": [
+        "7.3.6"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=7.3.7",
+      "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv"
+    },
+    {
+      "package": "vite",
+      "severity": "moderate",
+      "title": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors",
+      "versions": [
+        "7.3.6"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=7.3.7",
+      "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw"
+    },
+    {
+      "package": "vite",
+      "severity": "high",
+      "title": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows",
+      "versions": [
+        "7.3.6"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=7.3.7",
+      "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm"
+    },
+    {
+      "package": "vite",
+      "severity": "low",
+      "title": "Vite: Cross origin script execution through Vite custom middleware",
+      "versions": [
+        "7.3.6"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=7.3.7",
+      "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw"
+    },
+    {
+      "package": "vite",
+      "severity": "moderate",
+      "title": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine",
+      "versions": [
+        "7.3.6"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=7.3.7",
+      "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22"
+    },
+    {
+      "package": "@vitest/mocker",
+      "severity": "moderate",
+      "title": "Vitest: Code injection via unauthenticated manual mock registration",
+      "versions": [
+        "4.1.8"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=4.1.12",
+      "url": "https://github.com/advisories/GHSA-qxg6-89mg-rqv8"
+    },
+    {
+      "package": "zod",
+      "severity": "high",
+      "title": "Zod can exhaust memory while validating oversized constrained collections",
+      "versions": [
+        "4.4.3"
+      ],
+      "developmentOnly": false,
+      "patchedVersions": ">=4.6.6",
+      "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
+    },
+    {
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to Denial of Service via unbounded memory in the EventSource parser",
+      "versions": [
+        "8.11.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=8.12.2",
+      "url": "https://github.com/advisories/GHSA-4qv8-2p9j-2685"
+    },
+    {
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to Subresource Integrity bypass via non-lowercase algorithm tokens",
+      "versions": [
+        "8.11.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=8.12.2",
+      "url": "https://github.com/advisories/GHSA-f72v-6w45-q472"
+    },
+    {
+      "package": "fast-uri",
+      "severity": "moderate",
+      "title": "fast-uri vulnerable to URI scheme spoofing via percent-encoded scheme decoding",
+      "versions": [
+        "3.1.8"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=3.1.9",
+      "url": "https://github.com/advisories/GHSA-w74x-v6f9-j3xg"
+    },
+    {
+      "package": "fast-uri",
+      "severity": "low",
+      "title": "fast-uri vulnerable to improper path equivalence in relative reference normalization",
+      "versions": [
+        "3.1.8"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=3.1.9",
+      "url": "https://github.com/advisories/GHSA-xhq7-xmqj-769h"
+    },
+    {
+      "package": "fast-uri",
+      "severity": "moderate",
+      "title": "fast-uri vulnerable to host confusion via unchecked WHATWG host canonicalization",
+      "versions": [
+        "3.1.8"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=3.1.9",
+      "url": "https://github.com/advisories/GHSA-wjr9-j795-jxcr"
+    },
+    {
+      "package": "fast-uri",
+      "severity": "low",
+      "title": "fast-uri vulnerable to scheme injection via an unescaped first-segment colon in suffix references",
+      "versions": [
+        "3.1.8"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=3.1.9",
+      "url": "https://github.com/advisories/GHSA-333x-w4r6-6crp"
+    },
+    {
+      "package": "undici",
+      "severity": "high",
+      "title": "undici vulnerable to Denial of Service via unhandled error on excessive content-encodings",
+      "versions": [
+        "8.11.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=8.12.2",
+      "url": "https://github.com/advisories/GHSA-xjj6-f33q-929c"
+    },
+    {
+      "package": "undici",
+      "severity": "high",
+      "title": "undici vulnerable to cache poisoning and cross-user disclosure via cross-origin redirects",
+      "versions": [
+        "8.11.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=8.12.2",
+      "url": "https://github.com/advisories/GHSA-4w7w-5xrc-9h26"
+    },
+    {
+      "package": "undici",
+      "severity": "high",
+      "title": "undici vulnerable to TLS certificate validation bypass via dropped tls options in Agent",
+      "versions": [
+        "8.11.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=8.12.2",
+      "url": "https://github.com/advisories/GHSA-2m5v-pch6-74hx"
+    },
+    {
+      "package": "undici",
+      "severity": "high",
+      "title": "undici vulnerable to Denial of Service via TLS 1.2 certificate-changing renegotiation",
+      "versions": [
+        "8.11.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=8.12.2",
+      "url": "https://github.com/advisories/GHSA-qrxm-fqhp-jwvm"
+    },
+    {
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici WebSocket client vulnerable to Denial of Service via unbounded automatic PONG buffering",
+      "versions": [
+        "8.11.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=8.12.2",
+      "url": "https://github.com/advisories/GHSA-9fm3-97px-rjf6"
+    },
+    {
+      "package": "undici",
+      "severity": "moderate",
+      "title": "undici vulnerable to Denial of Service via unhandled exception in the decompress interceptor",
+      "versions": [
+        "8.11.2"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=8.12.2",
+      "url": "https://github.com/advisories/GHSA-55wc-3pg8-jfw6"
+    },
+    {
+      "package": "@modelcontextprotocol/client",
+      "severity": "moderate",
+      "title": "MCP TypeScript client SDK: HTTP client transports and OAuth requests followed cross-origin redirects and re-sent custom headers and request bodies",
+      "versions": [
+        "2.2.0"
+      ],
+      "developmentOnly": true,
+      "patchedVersions": ">=2.3.0",
+      "url": "https://github.com/advisories/GHSA-6prh-2h8m-c8cw"
+    }
+  ],
+  "limitations": [
+    "Known-vulnerability database result, not a malware or backdoor attestation.",
+    "All flagged package/version pairs are also present in origin/main 82984b4 lockfile; reachability and exploitability were not proven.",
+    "Dependency source tarballs and transitive lifecycle scripts were not exhaustively audited."
+  ]
+}

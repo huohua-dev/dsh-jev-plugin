@@ -20,7 +20,8 @@ function featureDescription(feature, t) {
     if (feature.id === 'stage-navigation')
         return t('stageNavigationDescription');
     if (feature.id === 'mcp-selection')
-        return t('mcpSelectionDescription');
+        return feature.description.startsWith('Unavailable on this Host:')
+            ? t('mcpSelectionUnavailable') : t('mcpSelectionDescription');
     return feature.description;
 }
 function recordFeatureName(features, featureId, t) {

@@ -55,13 +55,19 @@ function task(agent, pending) {
 function validAnswers(response, count) {
 	return response.answers.length === count && response.answers.every((answer, index) => answer.id === `tool-${index}` && answer.kind === "noul" && Number.isFinite(answer.probability) && answer.probability >= 0 && answer.probability <= 1);
 }
+/** Older Hosts expose declarations in this public waterfall; current ones expose only text. */
+function hasAssemblyTools(presentation) {
+	return "tools" in presentation && Array.isArray(presentation.tools);
+}
 function apply(ctx, config) {
+	const providerOwnedTools = typeof ctx.tools.resolve === "function";
 	ctx.effect(() => ctx.jev.registerFeature({
 		id: FEATURE,
 		name: "MCP tool selection",
-		description: "Select native MCP tool definitions for the current task without changing permissions"
+		description: providerOwnedTools ? "Unavailable on this Host: provider-owned tool declarations have no public definition-only selection hook. Native tools and approvals remain unchanged." : "Select native MCP tool definitions for the current task without changing permissions"
 	}));
 	ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), "jev-mcp-selection.settings");
+	if (providerOwnedTools) return;
 	let states = /* @__PURE__ */ new WeakMap();
 	const claims = /* @__PURE__ */ new WeakMap();
 	const prepared = /* @__PURE__ */ new WeakMap();
@@ -380,6 +386,7 @@ function apply(ctx, config) {
 	} : assembly;
 	ctx.on("system-prompt/assemble", async (_assembly, context, next) => {
 		const original = await next();
+		if (!hasAssemblyTools(original)) return original;
 		const baseline = withoutHelpers(original);
 		const agent = context.agent;
 		if (!live(agent) || !context.signal) return baseline;

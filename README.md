@@ -1,10 +1,12 @@
 # deepseek-harness-jev
 
+> **Review branch, not merged into the fork's main:** this upstream merge has a known MCP selection capability gap on the new Host and unresolved dependency advisories. Read the [2026-11-06 review](docs/reviews/2026-11-06-upstream-review.md) before using it. Historical upstream installation URLs below do not install this fork's review branch.
+
 English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
 **Native DeepSeek Harness (DSH) plugin with Jev or Luna Decisions as its judgment model.**
 
-`deepseek-harness-jev` connects [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) to [Jev by TypeSafe AI](https://typesafe.ai/) for agent skill and file selection, task supervision, shared-finding corrections, tool-output filtering, single-operation approval assistance, and historical stage navigation. Its 12 features are individually configurable from one Jev settings page and are all disabled by default.
+`deepseek-harness-jev` connects [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) to [Jev by TypeSafe AI](https://typesafe.ai/) for agent skill, file and MCP tool selection, task supervision, shared-finding corrections, tool-output filtering, single-operation approval assistance, and historical stage navigation. Its 13 features are individually configurable from one Jev settings page and are all disabled by default.
 
 The main model continues to plan, generate answers, and call native tools. Enabled features use the saved Jev or Luna Decisions connection at DSH extension points for skill catalogs, agent lifecycle, tool results, and approvals, then apply results according to each feature. DSH configures the main model separately. Integration uses public Cordis / DSH plugin APIs without modifying the host source.
 
@@ -12,9 +14,11 @@ This is an independent community project, not an official DeepSeek or Jev releas
 
 The [Chinese feature website](https://luobosibing2.github.io/dsh-jev-plugin/) explains each DSH integration point, the information sent to the judgment service, and the observed test cases and limits.
 
-The Chinese [principles and all features explainer](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html) covers all 12 features and includes a complete skill-selection input/output example. Its [Markdown source](docs/explainers/dsh-jev-plugin.md) is maintained in this repository.
+The Chinese [principles and all features explainer](https://luobosibing2.github.io/dsh-jev-plugin/explainers/dsh-jev-plugin.html) covers the 12 upstream features and includes a complete skill-selection input/output example. This fork additionally includes MCP tool selection, documented below. Its [Markdown source](docs/explainers/dsh-jev-plugin.md) is maintained in this repository.
 
 The [quick review directory](https://luobosibing2.github.io/dsh-jev-plugin/#quick-review) links to short source guides. The Chinese [log-admission interview guide](https://luobosibing2.github.io/dsh-jev-plugin/explainers/log-admission-interview.html) covers generic and test logs, design choices, live-model results and their limits; its [Markdown source](docs/explainers/log-admission-interview.md) is kept here.
+
+The Chinese [Goal supervision and completion review](https://luobosibing2.github.io/dsh-jev-plugin/explainers/goal-completion-review.html) follows the two current flows from their hooks through judgments, adoption, limited supplements and delivery records. Its [Markdown source](docs/explainers/goal-completion-review.md) separates current behavior from historical live-model results.
 
 `main` supports Jev and Luna Decisions through OpenRouter or OpenAI, with three separate saved connections per profile. The [2026-10-07 public report](docs/testing/2026-10-07-luna-decisions/README.md) separates fixed protocol/installation checks, controlled live samples, and real DeepSeek Flash tasks. Official OpenAI calls succeeded in these limited samples; the only live OpenRouter diagnostic returned a provider-access HTTP 403 and was stopped. These results do not establish general judgment accuracy or stable task benefit.
 
@@ -22,32 +26,45 @@ The [2026-10-09–10 Harness compatibility report](docs/testing/2026-10-09-harne
 
 The [2026-10-11 version compatibility report](docs/testing/2026-10-11-harness-version-compatibility/README.md) checks the current plugin on four older DSH releases and 0.2.1-alpha.2. It records official installation, nine Host components, native tools and local deterministic judgment flows, plus browser checks on the oldest release, 0.2.0-rc.2 and 0.2.1-alpha.2. These checks establish version integration in the tested environment, not judgment-model quality.
 
+The [2026-10-21 Harness compatibility report](docs/testing/2026-10-21-harness-compatibility/README.md) covers the DSH **0.2.1-rc.2** upgrade. This run checks the official package, Host components and Web integration with deterministic local model replies; no live model service is called. Earlier reports retain their original versions and experiment conditions.
+
 ## What is included?
 
 The plugin provides the following features. **Every feature is independently disabled by default.** Installing the package does not enable them.
 
 | Feature | What it does |
 | --- | --- |
-| Skill selection | Ranks skill names and summaries before catalog publication. The main agent still loads the original skill. |
+| Skill selection | Recommends up to the configured number of skills whose relevance probability reaches the minimum; a successful judgment can recommend none. The main agent still loads the original skill. |
 | File ranking | Ranks the original `glob` path results without another filesystem scan or file-content read. |
 | Drift reminders | Checks progress between model steps and can deliver one nonblocking reminder. |
 | Completion checks | Checks the current turn's requirements, latest Todo and final answer, with at most 3 automatic supplements by default. |
 | Goal supervision | Checks native goal completion and pauses after a configurable run of rounds without progress. |
 | Instruction guidance | Reads current user instructions and applicable agent rules, then supplies a nonblocking reminder when needed. |
-| Interjection routing | Routes a running user's correction to the next step; queues other messages for a later turn. |
+| Interjection routing | Chooses later work, a current-task addition, or immediate model-response interruption followed by same-turn continuation. |
 | Shared-finding corrections | Compares reports and messages already shared, then sends corrections to affected recipients. |
 | Long-log admission | Can remove clearly unneeded progress or repeated notices after a command returns, with an original-output recovery reference. |
 | Test-log admission | Protects failures, summaries, named and slow tests while judging whether ordinary passing details are needed. |
 | Workspace approval | In `workspace-write`, can answer eligible native single-operation escalation requests; non-affirmative answers return to human approval. |
 | Stage navigation | Classifies complete recorded model steps on request, then links consecutive stages to their original trajectory evidence. |
+| MCP tool selection | Selects native MCP tool definitions for the current task, with catalog/load recovery; it does not change execution permissions or approvals. |
 
 ![Jev settings page with independent feature switches for selection, supervision, corrections, and workspace approval](docs/images/jev-feature-toggles.png)
 
-*Example feature settings from an earlier build. The screenshot shows nine switches and user-selected states; current `main` includes the twelve features listed above, all disabled on a fresh installation.*
+*Example feature settings from an earlier build. The screenshot shows nine switches and user-selected states; this fork includes the thirteen features listed above, all disabled on a fresh installation.*
+
+Interjection routing requires a Host with the public `Agent.interruptResponse()` capability. The unpatched published DSH 0.2.2-alpha.2 package does not provide it. Keep routing off on Hosts without that capability; enabling it reports an explicit Host-capability error before classification. The upstream source integration used a matching DSH source change, not a published-release capability claim. This plugin does not patch DSH; keep routing disabled unless the Host already exposes the required public method.
 
 All features share a connection, profile-scoped settings, decision records, and operation receipts. Most agent-facing features target live Web root sessions; correcting a child agent does not enable every feature inside that child.
 
+Interjection routing limits task, Goal, recent assistant text and tool metadata to the plugin row's shared `contextChars` budget (12,000 by default). Current user requirements take priority; selected requirements retain their original order. Raw tool arguments are omitted entirely from the routing context and its Host projection; tool names, call IDs and status remain. The current message has a separate `messageChars` limit; original Session history is retained. User and assistant text still goes to the judgment endpoint as before: this mitigation is not an automatic redaction guarantee for all such text. Historical stage navigation has its own separate credential-redaction rules.
+
 **Feature branches are not all included in `main`.** Tool-output filtering is included in `main`; `codex/jev-tool-output-admission` preserves its development snapshot. Native web execution is on `codex/jev-native-web-execution` and is **paused; ordinary-site effectiveness has not passed acceptance**. Historical split branches preserve earlier work. See [branch status](docs/branches.md) before switching branches.
+
+## MCP tool selection
+
+**Review-branch compatibility limitation:** selection requires the legacy public assembly that includes native tool schemas. DSH 0.2.2-alpha.2 uses step-owned tool activation and no longer exposes that assembly surface. On this Host, the feature is registered for settings compatibility but selection and recovery helpers are unavailable: no MCP judgment runs, and the Host retains its complete native tool catalog and existing permissions. Do not merge this branch into `main` as an equivalent replacement until a supported integration is available. Older-Host support below is retained, not revalidated across the full compatibility matrix in this review.
+
+The fork's independent `mcp-selection` switch and `jev-mcp-selection` Host row select native MCP definitions for live root Agents, not execution permissions. Defaults are at most 12 automatic definitions, minimum relevance probability 0.5 (equality qualifies), zero selections allowed, no pinned tools, a 4-second wait and a 48,000-character request budget. Pins and explicit loads may exceed the automatic count. Jev receives bounded recent user text and tool names/descriptions, not tool execution results. `mcp_catalog` discovers eligible omissions and `mcp_load` adds exact public names to the next model request. These tools do not connect servers, execute tools, grant permissions or bypass approval. Native-only presentation is supported; PTC/both presentation keeps the Host flow. Failures, stale inputs and budget rejection also retain the native definitions. See the [package reference](packages/jev/README.md#mcp-tool-selection).
 
 ## Completion checks
 
@@ -71,9 +88,11 @@ The independent **Stage navigation** switch is off by default. It controls the t
 
 Each classification covers one complete DSH model step: its recorded reasoning, text, all tool calls, and paired results. Jev selects one of six stages, `mixed`, or `unknown`; adjacent equal labels merge only within the same turn. The page keeps a multi-turn directory beside the original steps and exposes the actual classification input and answer. Labels and confidence do not establish tool success or classification accuracy. See the [package reference](packages/jev/README.md#stage-navigation) for input, storage, and failure behavior.
 
+Before stage analysis is sent or logged, JSON tool arguments are decoded for credential redaction and serialized again. Incomplete or invalid argument JSON is replaced with an explicit redaction marker. Original Session records remain unchanged; the revised redaction rules mark earlier classifications stale without deleting their saved records.
+
 ## Install through the Web UI (recommended)
 
-Compatibility validation exercises DSH **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2, 0.2.1-alpha.3, 0.2.1-rc.1 and 0.2.1-rc.2**. The package declares the range `>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`, so later 0.2.x releases are accepted by the installer without a plugin update, while 0.3.0 and later stay outside the declaration until validated; unlisted 0.2.x releases are accepted but not individually exercised. 0.2.1-alpha.1 remains outside the declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+The fork declares `>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`. This is an installation acceptance range, not a claim that every accepted 0.2.x release has been individually validated. The [published verification targets](scripts/validation/compatibility-versions.mjs) retain 0.2.1-rc.1 and 0.2.1-rc.2 and add 0.2.1-rc.5; the default smoke target is 0.2.1-rc.5. Historical reports retain their original tested versions and conditions. The separate 0.2.2-alpha.2 source-build baseline is not a guarantee that a published Host provides response interruption. Versions outside the peer range, including 0.2.1-alpha.1, are not accepted. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
@@ -88,7 +107,7 @@ https://github.com/luobosibing2/deepseek-harness-jev
 
 *Paste the repository URL into “Package name or address”, then click Install.*
 
-**Enabling the package does not enable its 12 Jev features; they remain off by default.** Installation applies to the Host profile serving the current Web UI. The Host needs pnpm and access to GitHub. The repository includes the plugin entry and prebuilt files, so installation does not compile source on the user's machine or require an npm registry publication.
+**Enabling the package does not enable its 13 Jev features; they remain off by default.** Installation applies to the Host profile serving the current Web UI. The Host needs pnpm and access to GitHub. The repository includes the plugin entry and prebuilt files, so installation does not compile source on the user's machine or require an npm registry publication.
 
 The GitHub entry provides the `main` features, not experimental branches. The older [v0.1.0 release](https://github.com/luobosibing2/deepseek-harness-jev/releases/tag/v0.1.0) does not include the newly integrated log filters. Build from source below only when changing or building the code yourself.
 
@@ -100,13 +119,15 @@ Use the following steps when modifying or building the plugin yourself. Existing
 
 - Node.js **24.11 or later** is recommended; the publication build is checked on Node 24.14.1.
 - pnpm **11.7.0** available on `PATH`.
-- Development baseline: DeepSeek Harness CLI and development packages **0.2.1-rc.2**, with Cordis **4.0.5**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
+- Development baseline: DeepSeek Harness CLI and development packages **0.2.2-alpha.2**, with Cordis **4.0.6-alpha.1** and Loader **1.0.7-alpha.1**; the Typert generator is also pinned to **0.2.2-alpha.2**. These exact build versions are separate from the supported installation range above. Use the explicit version below because npm's `latest` tag can point to a different release.
 - A configured main-model provider in DSH, plus credentials for your selected Jev-compatible System One service or Luna API.
+
+Legacy DSH support covers installing and running the built package. Source builds and TypeScript consumers of the generated Remote declarations use the 0.2.2-alpha.2 development baseline.
 
 If needed, install the tools:
 
 ```sh
-npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.1-rc.2
+npm install --global pnpm@11.7.0 @deepseek-ai/dsh@0.2.2-alpha.2
 ```
 
 ### Build the package
@@ -171,22 +192,24 @@ Credential status shows existence and write access, never the saved key. “Conf
 
 Requests use the connection saved when an attempt starts. A later switch applies to new attempts and explicit retries. Failures do not automatically fall back to another model or API. OpenRouter requests above 200 questions are split without dropping questions; all batches share the original timeout and complete before a business answer is delivered. Partial failures retain their actual packets and known usage. See the [package reference](packages/jev/README.md#judgment-connections) for configuration and lifecycle details.
 
-Selection defaults are 5 skill summaries, at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. A larger glob skips judgment ranking rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps, a pause after 3 native goal rounds without progress, and at most 3 automatic completion supplements. The supplement limit accepts positive safe integers and is saved in the current profile; invalid input shows an error and keeps the saved value. These independent counts can be changed without enabling the features.
+Selection defaults are at most 5 eligible skill summaries, a minimum skill relevance probability of 0.5, at most 40 glob matches eligible for ranking, and 12 displayed ranked paths. Edit the minimum probability in the Web selection settings or set `skillMinProbability` on the `jev-selection` plugin row to a finite value in `[0, 1]`; a probability equal to the threshold qualifies. Every eligible nonempty catalog is judged, even if its size is within the skill limit. If no skill qualifies, a normal empty catalog lets the agent continue; `skill_catalog` recovers every model-invocable summary, and the original `skill` loader remains available by exact name. A larger glob skips judgment ranking rather than silently judging only the first 40. Supervision defaults are a drift check every 6 completed model steps, a pause after 3 native goal rounds without progress, and at most 3 automatic completion supplements. The supplement limit accepts positive safe integers and is saved in the current profile; invalid input shows an error and keeps the saved value. These independent counts can be changed without enabling the features.
 
-Long-log and test-log admission have independent switches, both off by default. Generic command logs start at 6,000 Unicode code points and recognized test logs at 4,000. The generic limit defaults to 48 eligible candidate blocks; first, last, and other retained groups do not count. With more than 48 candidates, the generic branch skips filtering at this default. The default omit-probability threshold is 0.8 and the judgment wait limit is 4 seconds. The settings page exposes these and the other admission budgets without enabling either feature.
+Long-log and test-log admission have independent switches, both off by default. Generic command logs start at 6,000 Unicode code points and recognized test logs at 4,000. The generic limit defaults to 48 eligible candidate blocks; first, last, and other retained groups do not count. With more than 48 candidates, the generic branch skips filtering at this default. Both branches share a default omit-probability threshold of 0.7; an explicit profile value takes precedence. The judgment wait limit is 4 seconds. See the [threshold evaluation](docs/reports/2026-10-17-log-admission-threshold.md) for the evidence and limits. The settings page exposes these and the other admission budgets without enabling either feature.
+
+When native Spill has a configured `maxInlineTokens`, admission first estimates the complete model-visible result with the Host's shared estimator and that execution's effective budget. A result above the budget skips both the judgment request and rule-based omissions, then continues to native Spill. A result equal to the budget may continue through the existing checks. Jev still processes the text before Spill clips it. If the policy is not loaded or its budget is unset, existing Jev admission continues without this limit; `0` is a configured budget. Any adopted replacement must also fit the budget with its omission markers, recovery hint, and outer result included. This is task-related noise removal within the native budget, not a guarantee of token savings or better task results. See the [package reference](packages/jev/README.md#tool-log-admission) for configuration changes and uncertain policy state.
 
 ## Behavior and limitations
 
 - **Reminders are advisory.** Drift and instruction guidance do not block or cancel tools, and do not force the main model to comply. Evidence questions retain at least two choices even with one reference or no textual requirements; an uncertainty choice cannot supply a correction's supporting reference.
 - **Completion checks in a fixed 16-slot diagnosis.** With scripted initial errors, real Jev judgments and DeepSeek supplements met the core requirements in 6/6 enabled error cases; 2/2 accurate enabled controls were judged complete without a supplement. See the [new results](docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md). Those trials used the earlier recorded-evidence semantics and do not establish real-task results for lightweight report checks. This diagnosis does not establish a natural-task error rate or average coding benefit. In an earlier long coding trial, the default evidence budget cropped the original requirement, leading to zero adopted judgments and zero automatic supplements before manual Retry/Cancel; see the [historical report](docs/testing/2026-10-02-completion-skill/README.md).
-- **Approvals remain single-operation.** Workspace approval neither changes the session's sandbox mode nor overrides fixed host checks. `approve` can supply `allowed-once`; `unauthorized` or `unknown` returns to the original human approval flow. Technical failures retain manual Retry/Cancel.
+- **Approvals remain single-operation.** Workspace approval neither changes the session's sandbox mode nor overrides fixed host checks. Operation paths and direct-script evidence follow the current native working directory, including relative shell `workdir` overrides; the original workspace remains the sandbox boundary. `approve` can supply `allowed-once`; `unauthorized` or `unknown` returns to the original human approval flow. Technical failures retain manual Retry/Cancel.
 - **Shared corrections have a limited scope.** They process already-shared reports and messages, not every agent's private exploration. Automatic delivery targets the live root agent and its active, continuable direct children. Duplicate corrections can still arise when the same finding appears in different report forms.
 - **Judgment success is not action success.** The ledger distinguishes an answer, its adoption, permission issuance, and execution results.
-- **Log admission keeps an original reference.** It changes only eligible model-visible tool text after execution; DSH's immediate spill, tool output limits, and later context compaction still apply. An isolated real-profile build reduced one 8,510-character log by 75.7%. A neutral 180-test run reached the test-log judge but stayed complete because its omit probabilities were below 0.8; that run does not establish test-log reduction effectiveness. See the [tool-output admission report](docs/reports/2026-09-27-tool-output-admission.md).
+- **Log admission keeps an original reference.** It changes only eligible model-visible tool text after execution; DSH's immediate spill, tool output limits, and later context compaction still apply. An isolated real-profile build reduced one 8,510-character log by 75.7%. A neutral 180-test run reached the test-log judge but stayed complete because its omit probabilities were below the then-configured 0.8 threshold; that run does not establish test-log reduction effectiveness. See the [tool-output admission report](docs/reports/2026-09-27-tool-output-admission.md).
 - **Validation is scoped.** Deterministic tests establish integration. Limited real-service examples do not establish general semantic accuracy. See [validation notes](docs/validation.md).
 - **Luna task results retain misses and limits.** Two earlier controlled approval samples returned `unauthorized`; a later real task received `approve` and executed one native `allowed-once` write. A real build log decreased from 8,407 to 2,122 code points (74.76%) at the original defaults, while five tied file-ranking probabilities did not change order. The [bilingual Luna report](docs/testing/2026-10-07-luna-decisions/README.md) records both results, original-log recovery, and unverified features.
 
-Enabled features send the relevant task context or operation data to the configured judgment endpoint. Exact judgment inputs and answers are stored in the profile's local plugin records; model-visible effects use normal DSH session records. Keep runtime records and credentials private. Public source history excludes personal QA screenshots and raw session captures.
+Enabled features send the relevant task context or operation data to the configured judgment endpoint. There is no blanket guarantee of automatic credential redaction across all user/assistant text sent by enabled features. Exact judgment inputs and answers are stored in the profile's local plugin records; model-visible effects use normal DSH session records. Keep runtime records and credentials private. Public source history excludes personal QA screenshots and raw session captures.
 
 ## Updating or removing the plugin
 
@@ -206,7 +229,7 @@ The Client CSS build uses paths relative to the package for class-name hashes an
 
 Protocol-reference preparation uses a directory junction on Windows, so `pnpm run typecheck` and `pnpm run build` do not require elevation or Developer Mode to create that dependency link. Other platforms retain a relative directory symlink. The preparation regression runs in both the Windows job and the standard test suite.
 
-Run `pnpm run test:compatibility` to build and pack the official GitHub-install entry, prepare the exact development DSH version, and check installation, Host components and the Jev Web page in a disposable profile. The [compatibility smoke guide](docs/testing/compatibility-smoke/README.md) covers Chromium setup, explicit version selection and supported-version updates. The check uses local deterministic model replies and needs no real model credentials.
+Run `pnpm run test:compatibility` to build and pack the official GitHub-install entry, prepare the latest DSH release in the verification target list, and check installation, Host components and the Jev Web page in a disposable profile. The published-release smoke defaults to 0.2.1-rc.5, checks 10 Host components and enables 12 of the 13 features, including MCP selection; interjection routing stays disabled because it requires the public `Agent.interruptResponse()` capability. This plugin does not patch the Host. The [compatibility smoke guide](docs/testing/compatibility-smoke/README.md) covers Chromium setup, explicit version selection and supported-version updates. The check uses local deterministic model replies and needs no real model credentials.
 
 Maintainers can use the [DeepSWE paired-evaluation runner](bench/deepswe/README.md) for coding tasks and the [glob-ranking pipeline](bench/selection/README.md) for fixed path-selection cases. Both use isolated DSH/Pier trials and keep model execution separate from offline checks and reports. The [Chinese evaluation guide](bench/deepswe/README.zh-CN.md) covers the coding-task workflow.
 
@@ -223,6 +246,7 @@ pnpm exec vitest run packages/jev/tests/host.test.ts packages/jev/tests/wire.tes
 Run the focused tests for the feature you change. Do not enable real-provider experiments or use someone else's credentials without explicit authorization. Development fixtures and tests are excluded from the installable tarball.
 
 - [Package reference and consumer API](packages/jev/README.md)
+- [Planning, decision, and delivery records](.agents/notes/README.md)
 - [Workspace-approval integration tests](packages/jev/tests/workspace-approval.test.ts)
 - [Workspace-approval QA cases](packages/jev/tests/workspace-approval-qa.md)
 - [Tool-output admission report](docs/reports/2026-09-27-tool-output-admission.md)
@@ -234,6 +258,7 @@ Run the focused tests for the feature you change. Do not enable real-provider ex
 | Module | DSH extension points | Source |
 | --- | --- | --- |
 | Skill and file selection | `agent/pre-step`, `tools/execute`, `tools/post-execute` | [selection.ts](packages/jev/src/selection.ts) |
+| MCP tool selection | `system-prompt/assemble`, `agent/pre-step`, native tool registry | [mcp-selection.ts](packages/jev/src/mcp-selection.ts) |
 | Supervision and instruction guidance | `session/event`, `agent/pre-step`, `agent/turn-stopping`, `tools/pre-execute` | [supervision.ts](packages/jev/src/supervision.ts), [instructions.ts](packages/jev/src/instructions.ts) |
 | Message routing and shared corrections | Native Agent inbox, `agent/pre-step`, `tools/result`, subagent messaging | [interjection.ts](packages/jev/src/interjection.ts), [shared-findings.ts](packages/jev/src/shared-findings.ts) |
 | Tool-output and test-log filtering | `tools/post-execute` | [output-admission.ts](packages/jev/src/output-admission.ts) |

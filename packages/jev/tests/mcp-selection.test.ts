@@ -1,16 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { createVolatile, updateVolatile } from '@deepseek-ai/cosmokit'
-import { agentEvents, type Agent } from '@deepseek-ai/dsh-agent'
+import { agentEvents } from '@deepseek-ai/dsh-agent'
 import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
 import { createUserMessage, ToolCallId, type UserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { PtcRuntime, type PtcRunRequest, type PtcRunSpec, type PtcRunResult } from '@deepseek-ai/dsh-ptc-runtime'
-import { defineTool, type ToolPresentationMode } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@deepseek-ai/dsh-tools'
+import type { AssembleContext, PromptAssembly } from '@deepseek-ai/dsh-system-prompt'
 import { apply, Config, isMcpPublicName } from '../src/mcp-selection.ts'
 import { MCP_SELECTION_DEFAULTS } from '../src/mcp-selection-types.ts'
 import type { JevJudgeOnceOptions, JevJudgeOnceResult } from '../src/index.ts'
 import type { JevRequest } from '../src/types.ts'
+
+type ToolPresentationMode = 'native' | 'ptc'
+type LegacyAssemblyHook = (assembly: PromptAssembly, context: AssembleContext, next: () => Promise<PromptAssembly>) => Promise<PromptAssembly>
 
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
@@ -52,7 +56,20 @@ async function fixture(mode: ToolPresentationMode = 'native') {
     toolLimit: createVolatile(1), minProbability: createVolatile(0.5), allowZero: createVolatile(true),
     pinnedTools: createVolatile<string[]>([]), waitMs: createVolatile(1000), maxRequestChars: createVolatile(48000),
   }
-  apply(ctx, config)
+  // Explicit old public-contract adapter: exercise the retained legacy path
+  // without monkeypatching the installed Host or claiming it supports this hook.
+  let legacyHook: LegacyAssemblyHook | undefined
+  const legacyFilters: Array<(assembly: PromptAssembly) => PromptAssembly> = []
+  apply({
+    effect: ctx.effect.bind(ctx), fiber: ctx.fiber, settings: ctx.settings, jev: ctx.jev, agents: ctx.agents,
+    tools: {
+      register: ctx.tools.register.bind(ctx.tools), get: ctx.tools.get.bind(ctx.tools), schemas: ctx.tools.schemas.bind(ctx.tools),
+    },
+    on: (name: string, listener: unknown, options?: unknown) => {
+      if (name === 'system-prompt/assemble') { legacyHook = listener as LegacyAssemblyHook; return () => { legacyHook = undefined } }
+      return (ctx.on as Function)(name, listener, options)
+    },
+  } as unknown as Context, config)
   const executed = vi.fn(async () => 'ok')
   const register = (name: string, description = name) => ctx.tools.register(defineTool({ name, description,
     parameters: {}, output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] }, execute: executed }))
@@ -61,26 +78,34 @@ async function fixture(mode: ToolPresentationMode = 'native') {
   register('read')
   const agent = await harness.create(SessionId('one'))
   let sequence = 0
-  const invoke = (name: string, args: object = {}, target = agent) => ctx.agents.withInitiator(target, () => ctx.tools.execute({
-    name, arguments: args, callId: ToolCallId(`call-${++sequence}`), signal: new AbortController().signal, agent: target,
-  }))
-  const assemble = (target = agent, signal = new AbortController().signal) => ctx.systemPrompt.assemble({ scope: target, agent: target, signal })
+  const invoke = (name: string, args: object = {}, target = agent) => ctx.agents.withInitiator(target, async () => {
+    const batch = await ctx.tools.execute({
+      calls: [{ name, arguments: JSON.stringify(args), id: ToolCallId(`call-${++sequence}`), type: 'tool-call' }],
+      signal: new AbortController().signal, agent: target,
+    })
+    return batch.results[0]!.result
+  })
+  const assemble = async (target = agent, signal = new AbortController().signal) => {
+    const context = { scope: target, agent: target, signal }
+    const original = await ctx.systemPrompt.assemble(context)
+    return legacyHook!(original, context, async () => legacyFilters.reduce((assembly, filter) => filter(assembly), original))
+  }
   const step = async (pending: UserMessage[] = [], target = agent) => {
     for (const message of pending) agentEvents(ctx, target).emit('agent/inbox/claimed', { message, turn: 1 })
     const assembly = await assemble(target)
     const decision = await agentEvents(ctx, target).waterfall('agent/pre-step', {
-      messages: pending, turn: 1, step: 1, signal: new AbortController().signal,
+      messages: pending, turn: 1, step: 1, signal: new AbortController().signal, modelSelection: target.model.current() ?? { provider: 'fixture', model: 'fixture' },
     }, () => Promise.resolve({ kind: 'enter' as const, messages: pending }))
     if (decision.kind === 'enter') for (const message of decision.messages) target.session.append('user/message', message, { surfaceOp: 'append' })
     return assembly
   }
-  return { ctx, harness, agent, config, scores, requests, judge, receipt, register, executed, removeA, assemble, invoke, step,
+  return { ctx, harness, agent, config, scores, requests, judge, receipt, register, executed, removeA, assemble, invoke, step, legacyFilters,
     enabled: (value: boolean) => { on = value; listener?.() } }
 }
 const names = (assembly: { tools: { name: string }[] }) => assembly.tools.map(tool => tool.name)
 const change = <T>(value: ReturnType<typeof createVolatile<T>>, next: T) => updateVolatile(value, createVolatile(next))
 
-describe('native MCP definition selection through public hooks', () => {
+describe('legacy native MCP definition selection contract (explicit adapter, not current Host support)', () => {
   it('validates settings and does not parse normalized names into server/raw identities', () => {
     expect(Config({} as never).toolLimit.get()).toBe(MCP_SELECTION_DEFAULTS.toolLimit)
     for (const values of [{ toolLimit: -1 }, { minProbability: 1.1 }, { waitMs: 0 }, { pinnedTools: ['mcp__*'] }]) expect(() => Config(values as never)).toThrow()
@@ -198,6 +223,38 @@ describe('native MCP definition selection through public hooks', () => {
     released.resolve()
     expect(names(await pending).filter(isMcpPublicName)).toEqual([A, B])
   })
+  it.each(['task', 'visibility', 'settings', 'feature'] as const)('discards an in-flight legacy answer after %s changes', async mutation => {
+    const f = await fixture()
+    const started = Promise.withResolvers<void>()
+    const released = Promise.withResolvers<void>()
+    const original = f.judge.getMockImplementation()!
+    f.judge.mockImplementation(async options => { started.resolve(); await released.promise; return original(options) })
+    const pending = f.step([user('initial task')])
+    await started.promise
+    if (mutation === 'task') f.agent.session.append('user/message', user('changed task'), { surfaceOp: 'append' })
+    if (mutation === 'visibility') f.agent.ctx.tools.restrict({ deny: [A] })
+    if (mutation === 'settings') change(f.config.toolLimit, 2)
+    if (mutation === 'feature') f.enabled(false)
+    released.resolve()
+    const assembly = await pending
+    // Fail back to the exact pre-Jev view rather than adopt the late proposal.
+    expect(names(assembly).filter(isMcpPublicName)).toEqual([A, B])
+    expect(names(assembly)).not.toContain('mcp_load')
+    expect(f.agent.session.deriveMessages().some(m => m.role === 'user' && m.source.kind === 'jev-mcp-selection')).toBe(false)
+  })
+  it('revalidates helper visibility after selection and never loads a newly restricted definition', async () => {
+    const f = await fixture()
+    await f.step([user('task')])
+    f.agent.ctx.tools.restrict({ deny: [A] })
+    const catalog = await f.invoke('mcp_catalog')
+    expect(catalog.isError).toBe(false)
+    if (catalog.isError) return
+    expect(JSON.parse(String(catalog.value)).tools).toEqual([{ name: B, description: B }])
+    const load = await f.invoke('mcp_load', { names: [A] })
+    expect(load.isError).toBe(false)
+    if (load.isError) return
+    expect(JSON.parse(String(load.value))).toMatchObject({ loaded: [], rejected: [A] })
+  })
   it('does not widen scoped restrictions, guards, or other assembly filters through pins/load', async () => {
     const f = await fixture()
     const restore = f.agent.ctx.tools.restrict({ deny: [A] })
@@ -212,9 +269,7 @@ describe('native MCP definition selection through public hooks', () => {
     await f.invoke('mcp_load', { names: [A] })
     expect(names(await f.step())).toContain(A)
     expect((await f.invoke(A)).isError).toBe(true)
-    f.ctx.on('system-prompt/assemble', async (_assembly, _context, next) => {
-      const result = await next(); return { ...result, tools: result.tools.filter(tool => tool.name !== A) }
-    })
+    f.legacyFilters.push(result => ({ ...result, tools: result.tools.filter(tool => tool.name !== A) }))
     expect(names(await f.step())).not.toContain(A)
     expect(JSON.stringify(await f.invoke('mcp_load', { names: [A] }))).toContain('rejected')
     expect(f.executed).not.toHaveBeenCalled()

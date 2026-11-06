@@ -44,6 +44,7 @@ it('prepares a fresh reference with resolvable dependencies and supports repeate
   const { root, reference, modules, installed } = await fixture()
   for (let run = 0; run < 2; run++) {
     await execute(process.execPath, [script], { cwd: root, timeout: 10_000 })
+    expect(await readFile(join(reference, 'src/facade.d.ts'), 'utf8')).toBe("export { Remote, TypertRemoteService } from './index.js'\n")
     expect(await readFile(join(reference, 'src/index.d.ts'), 'utf8')).toBe("export type { Sample } from './sample.js'\n")
     expect(await readFile(join(reference, 'src/sample.d.ts'), 'utf8')).toBe(`export interface Sample { value: ${run === 0 ? 'string' : 'number'} }\n`)
     await expect(lstat(join(reference, 'src/ignored.txt'))).rejects.toMatchObject({ code: 'ENOENT' })

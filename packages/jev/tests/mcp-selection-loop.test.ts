@@ -14,10 +14,13 @@ import { SessionId } from '@deepseek-ai/dsh-session'
 import Storage from '@deepseek-ai/dsh-storage'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
-import { defineTool, type ToolPresentationMode } from '@deepseek-ai/dsh-tools'
+import { defineTool } from '@deepseek-ai/dsh-tools'
 import UserQuestions from '@deepseek-ai/dsh-user-questions'
+import ApprovalService from '@deepseek-ai/dsh-user-approval'
 import JevService from '../src/index.ts'
 import * as mcpSelection from '../src/mcp-selection.ts'
+
+type ToolPresentationMode = 'native' | 'ptc'
 
 const SELECTED = 'mcp__fixture__search'
 const OMITTED = 'mcp__fixture__fetch'
@@ -164,120 +167,90 @@ async function fixture(script: StreamChunk[][], options: {
   }
 }
 
-describe('native MCP selection through the published AgentLoop (offline)', () => {
-  it('judges the first claimed input during assembly, recovers omissions next step, caches, and records actual Session evidence', async () => {
-    const h = await fixture([
-      call('catalog', 'mcp_catalog', { query: 'fetch' }),
-      call('load', 'mcp_load', { names: [OMITTED] }),
-      call('recovered-tool', OMITTED),
-      text('Recovered definition executed through the original tool pipeline.'),
-    ], { enabled: true })
-    const promptText = 'Find the document and fetch its complete body: first-turn-sentinel.'
-    const prompt = user(promptText)
-    expect(h.agent.session.deriveMessages()).toEqual([])
-    h.agent.followup(prompt)
-    await h.agent.whenIdle()
+describe('MCP selection compatibility with the published provider-owned Host (offline)', () => {
+  it('leaves definitions and Session headers intact with selection enabled, without paid judgments or helpers', async () => {
+    const h = await fixture([call('original', OMITTED), text('Original tool executed')], { enabled: true })
+    await h.run('Find the document and fetch its body')
     expect(h.errors).toEqual([])
     expect(h.asks).toEqual([])
-    expect(h.requests).toHaveLength(1)
-    expect(h.requests[0]!.state.context).toEqual([{ role: 'user', text: promptText }])
-    expect(h.duringHttp).toEqual([{ visibleUsers: [], mainRequests: 0 }])
-    // One question per eligible definition, each carrying its own name and description.
-    const rated = Object.values(h.requests[0]!.questions).map(question => /Tool: (\S+)\. Description:/.exec(question.instructions)?.[1])
-    expect(rated).toEqual([...MCP_NAMES].sort())
-    expect(JSON.stringify(h.requests[0]!.state)).not.toContain(SELECTED) // tool text is never duplicated into shared state
-    expect(Object.values(h.requests[0]!.questions).every(question => question.type === 'noul')).toBe(true)
-    expect(h.model.requests).toHaveLength(4)
-    const schemas = h.model.requests.map(request => names(request.tools))
-    expect(schemas.slice(0, 2)).toEqual(Array.from({ length: 2 }, () => [SELECTED, 'mcp_catalog', 'mcp_load', 'probe']))
-    expect(schemas.slice(2)).toEqual(Array.from({ length: 2 }, () => [OMITTED, SELECTED, 'mcp_catalog', 'mcp_load', 'probe']))
-    expect(h.executions).toEqual([OMITTED]) // catalog/load never execute or connect an MCP service
-    expect(JSON.stringify(h.model.requests[1]!.messages)).toContain(OMITTED)
-    expect(JSON.stringify(h.model.requests[2]!.messages)).toContain('Queued for the next model request')
-    expect(h.agent.session.deriveMessages().filter(message => message.id === prompt.id)).toHaveLength(1)
-    const notices = h.agent.session.deriveMessages().filter(message => message.role === 'user' && message.source.kind === 'jev-mcp-selection')
-    expect(notices).toHaveLength(2) // initial selection and the changed explicit-load set, not every step
-    const headers = h.headers()
-    expect(headers).toHaveLength(2)
-    expect(headers[0]!.data.header.tools).toEqual(h.model.requests[0]!.tools)
-    expect(headers[1]!.data.header.tools).toEqual(h.model.requests[2]!.tools)
-    expect(h.agent.session.requestHeader()?.tools).toEqual(h.model.requests[3]!.tools)
-    const results = h.agent.session.snapshotEvents().filter(event => event.type === 'tool/result')
-    expect(results).toHaveLength(3)
-    expect(results.every(event => !event.data.message.isError)).toBe(true)
-    expect(JSON.stringify(results[0]!.data.message)).toContain(OMITTED)
-    expect(JSON.stringify(results[1]!.data.message)).toContain('loaded')
-    expect(JSON.stringify(results[1]!.data.message)).toContain(OMITTED)
-    const records = await h.records()
-    expect(records.items).toHaveLength(1)
-    const record = await h.ctx.jev.getRecord(records.items[0]!.id)
-    expect(record).toMatchObject({ featureId: 'mcp-selection', status: 'succeeded', attempts: 1 })
-    expect(record?.attemptRecords).toHaveLength(1)
-    expect(record?.attemptRecords[0]?.request.state).toEqual(h.requests[0]!.state)
-    expect(record?.attemptRecords[0]?.response?.answers).toHaveLength(MCP_NAMES.length)
-    expect(record?.receipts).toHaveLength(1)
-    expect(record?.receipts[0]).toMatchObject({ id: 'mcp-definition-proposal', status: 'observed' })
-    expect(JSON.parse(record!.receipts[0]!.reason!)).toMatchObject({
-      mode: 'native', stage: 'assembly-proposal', selected: [SELECTED], fallback: false, modelReceived: 'unconfirmed',
-    })
-  })
-
-  it('requires its independent module entry and stays disabled with default feature settings', async () => {
-    const unmounted = await fixture([text('Unmodified host')], { mountSelection: false, enabled: true })
-    await unmounted.run('Find and fetch a document')
-    expect(await unmounted.ctx.jev.listFeatures()).toEqual([])
-    expect(names(unmounted.model.requests[0]!.tools)).toEqual([...MCP_NAMES, 'probe'].sort())
-    expect(unmounted.requests).toHaveLength(0)
-    expect(unmounted.errors).toEqual([])
-    const disabled = await fixture([call('original', OMITTED), text('Original tool still works')])
-    await disabled.run('Find and fetch a document')
-    expect(await disabled.ctx.jev.listFeatures()).toMatchObject([{ id: 'mcp-selection', enabled: false }])
-    expect(disabled.requests).toHaveLength(0)
-    expect((await disabled.records()).items).toEqual([])
-    // Recovery helpers are hidden while the feature is off: the request equals the unmounted Host view.
-    expect(names(disabled.model.requests[0]!.tools)).toEqual([...MCP_NAMES, 'probe'].sort())
-    expect(disabled.executions).toEqual([OMITTED])
-    expect(disabled.errors).toEqual([])
-    expect(disabled.asks).toEqual([])
-    expect(disabled.agent.session.deriveMessages().some(message => message.role === 'user' && message.source.kind === 'jev-mcp-selection')).toBe(false)
-  })
-
-  it.each(['http', 'malformed'] as const)('fails open once for %s faults without a model barrier or repeated judgment', async fault => {
-    const h = await fixture([call('original', OMITTED), text('Original answer after judge failure')], { enabled: true, fault })
-    await h.run('Find and fetch a document')
-    expect(h.errors).toEqual([])
-    expect(h.asks).toEqual([])
-    expect(h.requests).toHaveLength(1)
+    expect(h.requests).toEqual([])
+    expect((await h.records()).items).toEqual([])
+    expect(await h.ctx.jev.listFeatures()).toMatchObject([{
+      id: 'mcp-selection', enabled: true, description: expect.stringContaining('Unavailable on this Host'),
+    }])
     expect(h.model.requests).toHaveLength(2)
     for (const request of h.model.requests) expect(names(request.tools)).toEqual([...MCP_NAMES, 'probe'].sort())
-    expect(h.executions).toEqual([OMITTED])
     expect(h.headers()).toHaveLength(1)
     expect(h.headers()[0]!.data.header.tools).toEqual(h.model.requests[0]!.tools)
-    const records = await h.records()
-    expect(records.items).toHaveLength(1)
-    const record = await h.ctx.jev.getRecord(records.items[0]!.id)
-    expect(record).toMatchObject({ featureId: 'mcp-selection', status: 'failed', attempts: 1 })
-    // The real ledger allows action receipts only for succeeded judgments.
-    expect(record?.receipts).toEqual([])
+    expect(h.executions).toEqual([OMITTED])
+    expect(h.ctx.tools.get('mcp_catalog', h.agent)).toBeUndefined()
+    expect(h.ctx.tools.get('mcp_load', h.agent)).toBeUndefined()
     expect(h.agent.session.deriveMessages().some(message => message.role === 'user' && message.source.kind === 'jev-mcp-selection')).toBe(false)
   })
 
-  // Harness 0.2.1-rc.1 removed the combined `both` tool presentation; ptc is the case that keeps the Host's
-  // own tools in front, and native selection is covered by the cases above.
-  it.each(['ptc'] as const)('bypasses selection under the real %s presentation without connecting a service', async mode => {
-    const h = await fixture([text('Original presentation preserved')], { enabled: true, mode })
+  it('keeps the unmounted and default-disabled Host views identical', async () => {
+    const unmounted = await fixture([text('Unmodified host')], { mountSelection: false, enabled: true })
+    await unmounted.run('Find a document')
+    expect(await unmounted.ctx.jev.listFeatures()).toEqual([])
+    const disabled = await fixture([text('Original answer')])
+    await disabled.run('Find a document')
+    expect(await disabled.ctx.jev.listFeatures()).toMatchObject([{ id: 'mcp-selection', enabled: false }])
+    expect(disabled.requests).toEqual([])
+    expect(disabled.errors).toEqual([])
+    expect(unmounted.errors).toEqual([])
+    expect(disabled.model.requests[0]!.tools).toEqual(unmounted.model.requests[0]!.tools)
+  })
+
+  it('preserves scoped visibility, conditional admission, and native execution guards', async () => {
+    const h = await fixture([call('guarded', SELECTED), text('Guard retained')], { enabled: true })
+    h.agent.ctx.tools.restrict({ deny: [OMITTED] })
+    h.ctx.tools.guard(exec => exec.name === SELECTED ? 'fixture permission denied' : undefined)
+    h.ctx.tools.register(defineTool({ name: 'mcp__fixture__conditional', description: 'Not admitted', parameters: {},
+      output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+      execute: async () => { throw new Error('Inactive tool must not execute') },
+    }), { when: () => false })
+    await h.run('Find a document')
+    expect(h.errors).toEqual([])
+    expect(h.executions).toEqual([])
+    expect(h.requests).toEqual([])
+    expect(names(h.model.requests[0]!.tools)).toEqual([UNRELATED, SELECTED, 'probe'].sort())
+    const results = h.agent.session.snapshotEvents().filter(event => event.type === 'tool/result')
+    expect(results).toHaveLength(1)
+    expect(results[0]!.data.message.isError).toBe(true)
+    expect(JSON.stringify(results[0]!.data.message)).toContain('fixture permission denied')
+  })
+
+  it('delegates asks to the original native approval flow without granting permission', async () => {
+    const h = await fixture([call('ask', SELECTED), text('No approval bypass')], { enabled: true })
+    await h.ctx.plugin(ApprovalService, { policy: 'ask' })
+    const approvals: unknown[] = []
+    h.ctx.on('tools/pre-execute', (exec, next) => exec.name === SELECTED
+      ? Promise.resolve({ kind: 'ask' as const, reason: 'fixture requires approval' }) : next())
+    h.ctx.on('approval/request', async request => { approvals.push(request); return 'rejected' as const })
+    await h.run('Find a document')
+    expect(h.errors).toEqual([])
+    expect(approvals).toHaveLength(1)
+    expect(h.requests).toEqual([])
+    expect(h.executions).toEqual([])
+    expect(h.agent.session.snapshotEvents().filter(event => event.type === 'tool/result')[0]!.data.message.isError).toBe(true)
+  })
+
+  it('preserves the real PTC wire definitions and SDK without recovery-helper leakage', async () => {
+    const h = await fixture([text('Original PTC presentation preserved')], { enabled: true, mode: 'ptc' })
     await h.run('Find and fetch a document')
     expect(h.errors).toEqual([])
     expect(h.asks).toEqual([])
-    expect(h.requests).toHaveLength(0)
+    expect(h.requests).toEqual([])
     expect((await h.records()).items).toEqual([])
     expect(h.model.requests).toHaveLength(1)
     const tools = names(h.model.requests[0]!.tools)
     expect(tools).toContain('run_code')
     for (const name of MCP_NAMES) {
       expect(tools).not.toContain(name)
-      expect(JSON.stringify(h.model.requests[0]!.messages)).toContain(name) // real generated tools:sdk
+      expect(JSON.stringify(h.model.requests[0]!.messages)).toContain(name)
     }
+    expect(JSON.stringify(h.model.requests[0]!.messages)).not.toContain('mcp_catalog')
+    expect(JSON.stringify(h.model.requests[0]!.messages)).not.toContain('mcp_load')
     expect(h.headers()[0]!.data.header.tools).toEqual(h.model.requests[0]!.tools)
     expect(h.executions).toEqual([])
   })

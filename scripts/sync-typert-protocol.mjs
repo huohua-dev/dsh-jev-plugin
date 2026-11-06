@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, copyFile, symlink } from 'node:fs/promises'
+import { mkdir, readFile, readdir, copyFile, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 
@@ -23,6 +23,8 @@ await mkdir(output, { recursive: true })
 for (const name of await readdir(declarations)) {
   if (name.endsWith('.d.ts')) await copyFile(join(declarations, name), join(output, name))
 }
+// Reflection needs the decorators and base class; tsc resolves the full copied index.
+await writeFile(join(output, 'facade.d.ts'), "export { Remote, TypertRemoteService } from './index.js'\n")
 // Windows junctions do not require symbolic-link privileges and need an absolute target.
 const windows = process.platform === 'win32'
 try { await symlink(windows ? resolve('packages/jev/node_modules') : '../jev/node_modules', join(reference, 'node_modules'), windows ? 'junction' : 'dir') }

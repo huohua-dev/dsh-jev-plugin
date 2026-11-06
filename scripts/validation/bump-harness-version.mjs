@@ -11,10 +11,9 @@
  * version is read from the root manifest's @deepseek-ai/dsh devDependency, and
  * every DSH devDependency pinned to it moves to the target; matching
  * pnpm-workspace.yaml minimumReleaseAgeExclude unions gain the target.
- * @deepseek-ai/dsh-typert-generator is excluded from the baseline: it is pinned
- * to 0.2.1-alpha.2 because the 0.2.1-rc generator rejects merged protocol
- * declarations from installed peers outside this external workspace face (see
- * packages/typert-protocol-reference/README.md).
+ * The Typert generator moves with the baseline. The protocol reference facade
+ * avoids reflecting unrelated merged declarations from installed peers; validate
+ * the generated helper and runtime after every generator/protocol upgrade.
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -36,7 +35,7 @@ const hostRequire = createRequire(createRequire(import.meta.url).resolve('@deeps
 const semver = hostRequire('semver')
 if (!semver.valid(TARGET)) throw new Error(`--target must be an exact DSH version, got ${JSON.stringify(TARGET)}`)
 
-const DEV_BASELINE_EXCLUSIONS = new Set(['@deepseek-ai/dsh-typert-generator'])
+const DEV_BASELINE_EXCLUSIONS = new Set()
 const isDshPackage = (name) => name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-')
 const satisfies = (version, range) => semver.satisfies(version, range, { includePrerelease: true })
 

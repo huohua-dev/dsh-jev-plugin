@@ -5,9 +5,10 @@ import { join, relative } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import LlmRuntime, { LlmAdapter, createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
+import { verifyPublishedFeatureCoverage } from './compatibility-features.mjs'
 
 export const name = 'jev-compatibility-profile'
-export const inject = ['loader', 'jev', 'llm', 'agentLoop', 'agents', 'sessions', 'agentPresets', 'goals']
+export const inject = ['loader', 'jev', 'llm', 'agentLoop', 'agents', 'sessions', 'agentPresets', 'goals', 'workspaceRegistry']
 const user = text => createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text }] })
 
 async function until(read, accept, description) {
@@ -95,6 +96,12 @@ export function apply(ctx) {
         action.name = tool.name
         if (!Object.hasOwn(tool.parameters.properties, 'run_in_background')) delete action.arguments.run_in_background
       }
+      // The Host registers one shell tool per platform; the script names the POSIX one.
+      if (action.name === 'bash') {
+        const shell = request.tools.find(tool => tool.name === 'bash' || tool.name === 'pwsh')
+        assert(shell, 'Standard preset must expose a native shell tool')
+        action.name = shell.name
+      }
       if (action.name === 'update_goal') {
         const goal = ctx.goals.get(agents.get(id))
         assert(goal, 'Native goal must exist before completion')
@@ -117,6 +124,7 @@ export function apply(ctx) {
     scripts.set(id, script)
     const { agent } = await ctx.agents.create({ sessionId: id, agentOptions: { provider: 'jev-compatibility-fixture', model: 'fixture' }, meta: { cwd, agentPreset: 'standard' }, setup: async agentCtx => { await ctx.agentPresets.mount(agentCtx, 'standard') } })
     agents.set(id, agent)
+    results.hostCapabilities ??= { responseInterruption: typeof agent.interruptResponse === 'function' }
     // An absolute artifact path containing "ok" protects every TAP passing line.
     const approvedFixturePath = relative(cwd, join(root, 'approval-outside.txt'))
     agent.followup(user('Use native tools to read this isolated project, load its own skill, run its fixture scripts, and follow its AGENTS.md. I authorize the single fixture write at ' + approvedFixturePath + ' with danger-full-access for that operation only.'))
@@ -149,6 +157,7 @@ export function apply(ctx) {
       results.hostExports.push(key)
     }
     results.features = await ctx.jev.listFeatures()
+    results.featureCoverage = verifyPublishedFeatureCoverage(results.features)
     results.diagnostic = await ctx.jev.testConnection(ctx.jev.judgmentConnectionIdentity(), new AbortController().signal)
     assert(results.diagnostic.ok, 'Choice, Score and Noul diagnostic must pass')
     const simple = marker => [
@@ -160,7 +169,8 @@ export function apply(ctx) {
     ]
     await runCase('session-a', join(root, 'projects/a'), [...simple('a'),
       { name: 'bash', arguments: { command: 'node build.mjs', description: 'Run the isolated deterministic build log fixture' } },
-      { name: 'bash', arguments: { command: 'node --test --test-reporter=tap checks.test.mjs', description: 'Run the isolated deterministic test log fixture' } },
+      // The test reporter forks a child; a sandboxed Windows shell cannot spawn twice.
+      { name: 'bash', arguments: { command: 'node --test-reporter=tap --experimental-test-isolation=none checks.test.mjs', description: 'Run the isolated deterministic test log fixture' } },
       { name: 'write', arguments: { file_path: join(root, 'approval-outside.txt'), content: 'COMPAT_APPROVAL_OK', sandbox_permissions: 'danger-full-access', justification: 'Write the exact isolated file authorized in the fixture user request' } },
       { name: 'read', arguments: { file_path: 'guide.txt' } },
     ], true)
@@ -177,7 +187,29 @@ export function apply(ctx) {
       { name: '$delegate', arguments: { description: 'Read second fixture finding', prompt: 'Return the same fixed factual compatibility finding.', run_in_background: false } },
       { name: 'read', arguments: { file_path: 'guide.txt' } },
     ])
+    const selectionEntry = [...ctx.loader.entries()].find(entry => entry.options.name === '@dsh-jev/plugin/selection')
+    assert(selectionEntry, 'Installed profile must own the selection Loader row')
+    const selectionConfig = selectionEntry.options.config
+    try {
+      await ctx.loader.update(selectionEntry.id, { config: { ...selectionConfig, skillMinProbability: 1 } })
+      await ctx.loader.await()
+      assert.equal(selectionEntry.fiber.config.skillMinProbability.get(), 1, 'Loader must apply the temporary threshold')
+      const empty = await runCase('skill-no-relevant', join(root, 'projects/a'), [])
+      const catalogs = empty.messages.filter(message => message.source.kind === 'jev-skill-catalog')
+      assert.equal(catalogs.length, 1, 'A valid zero selection must publish one normal catalog')
+      assert.deepEqual(catalogs[0].source.entries, [], 'The fixed 0.99 probability must not reach a threshold of 1')
+      assert.equal(catalogs[0].source.selection.skillMinProbability, 1, 'The catalog must record the effective threshold')
+      const judgment = empty.records.find(record => record.featureId === 'skill-selection')
+      assert.equal(judgment?.status, 'succeeded', 'Zero selection must remain a successful judgment')
+      assert(judgment.receipts.some(receipt => receipt.id === 'skill-catalog-no-relevant' && receipt.status === 'observed'), 'Zero selection must retain its own receipt')
+      assert(empty.messages.some(message => message.role === 'assistant' && message.content.some(block => block.type === 'text' && block.text === 'Deterministic fixture completed with recorded native results.')), 'The main Agent must finish after receiving the empty catalog')
+    } finally {
+      await ctx.loader.update(selectionEntry.id, { config: selectionConfig ?? null })
+      await ctx.loader.await()
+    }
     const selected = results.cases[0]
+    const workspace = await ctx.workspaceRegistry.create(selected.initialCwd, 'Jev compatibility fixture')
+    await workspace.attachSession(selected.sessionId)
     const batch = await ctx.jev.startStageAnalysis({ sessionId: selected.sessionId, scope: { kind: 'all' }, mode: 'missing' })
     const stage = await until(() => ctx.jev.getStageNavigation(selected.sessionId, new AbortController().signal), value => !value.batch || !['running', 'pending'].includes(value.batch.status), 'stage classification completion')
     results.stage = { batch, snapshot: stage }
@@ -187,6 +219,8 @@ export function apply(ctx) {
     assert(results.finalHostRows.every(row => row.state === 2), 'Host rows must remain ACTIVE after business cases')
     assert.equal(results.errors.length, 0, 'Agent loop must not report runtime errors')
     assert.equal(results.unexpectedQuestions.length, 0, 'Deterministic valid replies must not reach human Retry/Cancel')
+    assert(results.cases.every(item => item.records.every(record => record.featureId !== 'interjection-routing')),
+      'Published-release fixtures must not classify interjections or claim response-interruption coverage')
     for (const label of ['session-a', 'session-b']) {
       const item = results.cases.find(item => item.label === label)
       assert(item.records.some(record => record.featureId === 'skill-selection' && record.status === 'succeeded'), label + ' skill judgment must complete')

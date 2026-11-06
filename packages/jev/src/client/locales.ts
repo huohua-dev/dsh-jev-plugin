@@ -3,7 +3,7 @@
 /** Dictionary keys rendered by the Jev page. */
 export type JevLocaleKey =
   | 'sharedFindingsName' | 'sharedFindingsDescription' | 'stageNavigationName' | 'stageNavigationDescription'
-  | 'mcpSelectionName' | 'mcpSelectionDescription' | 'mcpSelectionSettings' | 'mcpSelectionHint' | 'mcpSelectionBudgetHint'
+  | 'mcpSelectionName' | 'mcpSelectionDescription' | 'mcpSelectionUnavailable' | 'mcpSelectionSettings' | 'mcpSelectionHint' | 'mcpSelectionBudgetHint'
   | 'mcpToolLimit' | 'mcpMinProbability' | 'mcpAllowZero' | 'mcpAllowZeroHint' | 'mcpPinnedTools' | 'mcpPinnedToolsHint' | 'mcpWaitMs' | 'mcpMaxRequestChars'
   | 'mcpToolLimitInvalid' | 'mcpProbabilityInvalid' | 'mcpWaitInvalid' | 'mcpRequestInvalid' | 'mcpPinsInvalid' | 'mcpZeroInvalid'
   | 'saveMcpSelection' | 'mcpSelectionSaved' | 'mcpSelectionSaveFailed'
@@ -34,6 +34,7 @@ export type JevLocaleKey =
 export const en: Record<JevLocaleKey, string> = {
   sharedFindingsName: 'Shared finding corrections', sharedFindingsDescription: 'Compare already shared reports and messages, correct actual recipients, and ask the root to verify conflicts.',
   stageNavigationName: 'Stage navigation', stageNavigationDescription: 'Manually classify complete recorded steps in a Session and browse adjacent purpose stages.',
+  mcpSelectionUnavailable: 'Unavailable on this Host: no public definition-only selection hook. No MCP judgment runs; native tools and approvals remain unchanged.',
   mcpSelectionName: 'MCP auto-selection', mcpSelectionDescription: 'Select native MCP tool definitions for the current task. PTC and both modes retains the Host’s original tools; no service installation, connection, or permission changes.',
   mcpSelectionSettings: 'MCP auto-selection settings',
   mcpSelectionHint: 'Filters only native MCP tool definitions. PTC and both modes keeps the Host’s original tools. This does not install or connect services or change permissions. Saving settings does not enable the feature.',
@@ -82,6 +83,7 @@ saveConnection: 'Save connection', saveFirst: 'Save the connection before changi
 export const zh: Record<JevLocaleKey, string> = {
   sharedFindingsName: '共享发现纠正', sharedFindingsDescription: '比较已共享报告和消息，纠正实际接收者，并将冲突交给主代理核实。',
   stageNavigationName: '阶段导航', stageNavigationDescription: '手动分类会话中的完整步骤，并按轮次浏览连续目的阶段',
+  mcpSelectionUnavailable: '当前宿主不支持：缺少仅筛选工具定义的公开接口。不发起 MCP 判断，原生工具和审批保持不变。',
   mcpSelectionName: 'MCP 自动选择', mcpSelectionDescription: '为当前任务筛选 native MCP 工具定义。PTC 模式保留宿主原工具；不安装或连接服务，不修改权限。',
   mcpSelectionSettings: 'MCP 自动选择设置',
   mcpSelectionHint: '仅筛选 native MCP 工具定义，PTC 模式保留宿主原工具。不安装或连接服务，不修改权限。保存设置不会启用此功能。',

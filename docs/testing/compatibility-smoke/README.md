@@ -1,8 +1,12 @@
 ## 直接答案
 
-`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、十个 Jev Host 组件和真实 Web 客户端。默认版本取根 `package.json` 的 DSH 开发依赖，目前为 `0.2.1-rc.2`。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
+`pnpm run test:compatibility` 从当前源码重新构建正式根安装包，准备精确版本的官方 DSH CLI，再在新的临时 profile 中检查官方安装、十个 Jev Host 组件（包括 `jev-mcp-selection`）和真实 Web 客户端。默认版本取[验证版本列表](../../../scripts/validation/compatibility-versions.mjs)的最后一个发布版本，目前为 `0.2.1-rc.5`，与源码构建的 `0.2.2-alpha.2` 开发依赖分开。它不要求预先准备 CLI 路径表或安装包，不放宽正式 peer 声明。
 
-`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all ten Jev Host components and the real Web client in a new disposable profile. The default comes from the root DSH development dependency, currently `0.2.1-rc.2`. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
+`pnpm run test:compatibility` builds and packs the root GitHub-install entry, prepares an exact published DSH CLI, and checks official installation, all ten Jev Host components (including `jev-mcp-selection`) and the real Web client in a new disposable profile. It defaults to the last published target in the [verification version list](../../../scripts/validation/compatibility-versions.mjs), currently `0.2.1-rc.5`, independently of the `0.2.2-alpha.2` source-build dependencies. No pre-existing runtime map or tarball is needed, and the package keeps its declared peer versions.
+
+发布版检查启用其余 12 项功能（包括 MCP 工具选择），明确关闭 `interjection-routing`。中途插话分流需要 Host 的公开 `Agent.interruptResponse()`；本检查不将发布版本号或源码构建基线视为该能力的证明，本插件也不修改 DSH。Host 夹具记录实际功能开关与 Agent 能力，拒绝误开的分流配置，并确认没有分流判断记录。Web 检查核对 13 个开关中 12 开、分流关闭。这些开启状态仅属于临时测试 profile；正式新安装的 13 项功能仍默认全部关闭。结果与摘要保留该未验证项；上游独立源码联动实验的三路分流验证不能替代发布版能力检查。
+
+Published-release checks enable the other 12 features (including MCP tool selection) and explicitly disable `interjection-routing`. Routing requires the Host's public `Agent.interruptResponse()`; neither a release number nor the source-build baseline establishes this capability, and this plugin does not patch DSH. The Host fixture records actual switches and Agent capabilities, rejects enabled routing and checks that no routing judgment was made. The Web check verifies 13 switches with 12 enabled and routing disabled. These enabled states apply only to the disposable test profile; all 13 features remain disabled on a fresh normal installation. Results and summaries retain this unverified capability; upstream's separate source experiment for three-way routing does not replace a published-release capability check.
 
 ## 准备与运行
 
@@ -20,9 +24,9 @@ Linux 环境缺少浏览器系统依赖时，使用 `pnpm exec playwright instal
 
 On Linux, use `pnpm exec playwright install --with-deps chromium` when Chromium system dependencies are missing. CI uses this preparation command.
 
-包管理器启动支持 Windows 的 `.cmd` shim。`pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs` 使用临时 npm/pnpm shim 检查命令启动、参数及失败记录；不安装 DSH、不运行构建，也不启动 profile。该回归检查在 Linux 和 Windows CI 中运行；它不代表完整的 Windows Host/Web 验证通过。
+包管理器启动支持 Windows 的 `.cmd` shim。`pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs` 使用临时 npm/pnpm shim 检查命令启动、参数、失败记录及真实归档解包；不安装 DSH、不运行构建，也不启动 profile。解包从归档所在目录使用相对文件名，兼容 GNU tar 与 Windows 自带的 BSD tar，不依赖 GNU 专用参数。该回归检查在 Linux 和 Windows CI 中运行；它不代表完整的 Windows Host/Web 验证通过。
 
-Package-manager launches support Windows `.cmd` shims. `pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs` checks command launches, arguments and failure records with temporary npm/pnpm shims, without installing DSH, running a build or starting a profile. This regression check runs in Linux and Windows CI; it does not establish a full Windows Host/Web pass.
+Package-manager launches support Windows `.cmd` shims. `pnpm exec vitest run scripts/validation/compatibility-smoke.test.mjs` checks command launches, arguments, failure records and real archive extraction with temporary npm/pnpm shims, without installing DSH, running a build or starting a profile. Extraction uses a relative archive filename from its directory, supporting GNU tar and Windows' bundled BSD tar without GNU-only flags. This regression check runs in Linux and Windows CI; it does not establish a full Windows Host/Web pass.
 
 可以指定另一个已声明支持的精确版本，例如旧宿主 `0.2.0-rc.2`：
 
@@ -32,9 +36,9 @@ Select another explicitly supported version, for example the legacy host `0.2.0-
 pnpm run test:compatibility --version 0.2.0-rc.2
 ```
 
-当前支持范围与已验证发布版本以[安装说明](../../../README.md#install-through-the-web-ui-recommended)为准。每次运行使用新的实验目录；需要保留的产物位于忽略的 `.artifacts/` 中。
+本 fork 的 peer 范围保持 `>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`；接受安装不表示已逐一验证所有被接受的 0.2.x 版本。发布版目标列表保留 `0.2.1-rc.1` 和 `0.2.1-rc.2`，新增 `0.2.1-rc.5`。当前接受范围见[安装说明](../../../README.md#install-through-the-web-ui-recommended)，精确验证目标见[版本列表](../../../scripts/validation/compatibility-versions.mjs)。每次运行使用新的实验目录；需要保留的产物位于忽略的 `.artifacts/` 中。
 
-The [installation guide](../../../README.md#install-through-the-web-ui-recommended) owns the current support range and exercised releases. Each run uses a new directory under ignored `.artifacts/`.
+The fork retains the peer range `>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`; installation acceptance does not mean every accepted 0.2.x version has been individually validated. Published targets retain `0.2.1-rc.1` and `0.2.1-rc.2` and add `0.2.1-rc.5`. The [installation guide](../../../README.md#install-through-the-web-ui-recommended) owns the acceptance range; the [version list](../../../scripts/validation/compatibility-versions.mjs) owns exact verification targets. Each run uses a new directory under ignored `.artifacts/`.
 
 ## 成功与失败的判定
 
@@ -42,15 +46,15 @@ The [installation guide](../../../README.md#install-through-the-web-ui-recommend
 
 The check validates the newly built tarball's manifest, Host and Client runtime, and Cordis patch before invoking the official installer. It reuses the [compatibility matrix](../../../scripts/validation/compatibility-matrix.mjs) and [profile fixture](../../../packages/jev/tests/fixtures/compatibility-profile.mjs), with a local deterministic main model and loopback Jev HTTP replies.
 
-浏览器在 Host 仍运行时打开官方认证地址，通过插件卡进入 Jev 页面，等待设置与功能数据，并检查判断记录页。只启动 Web profile 或只看到 Host 激活不足以得到客户端通过结果。浏览器导入、页面错误、安装拒绝、Host 失败和超时均使命令以非零状态退出。结束或失败时关闭本轮浏览器、Host 和回环服务。
+浏览器在 Host 仍运行时打开官方认证地址，通过插件卡进入 Jev 页面，等待设置与功能数据，并检查判断记录页。随后打开夹具的真实 Session，进入 Jev 阶段导航，读取已分类步骤，再返回对话。只启动 Web profile 或只看到 Host 激活不足以得到客户端通过结果。浏览器导入、页面错误、安装拒绝、Host 失败和超时均使命令以非零状态退出。结束或失败时关闭本轮浏览器、Host 和回环服务。
 
-While the Host is running, the browser opens its authenticated Web address, enters the Jev page through the plugin card, waits for settings and feature data, and checks decision records. Web profile startup and Host activation alone do not establish Client success. Import or page errors, installer rejection, Host failure and timeouts produce a nonzero exit. The run closes its browser, Host and loopback server on success or failure.
+While the Host is running, the browser opens its authenticated Web address, enters the Jev page through the plugin card, waits for settings and feature data, and checks decision records. It then opens the fixture Session, reads classified steps in Jev stage navigation, and returns to Chat. Web profile startup and Host activation alone do not establish Client success. Import or page errors, installer rejection, Host failure and timeouts produce a nonzero exit. The run closes its browser, Host and loopback server on success or failure.
 
 ## 更新支持版本
 
-DSH 升级时，运行 `node scripts/validation/bump-harness-version.mjs --target <exact version>` 更新两份清单的精确开发依赖、`pnpm-workspace.yaml` 年龄门排除并登记新验证版本；声明区间已覆盖 0.2.x 时无需为逐个版本改 peer（区间不够时才加 `--peer-range`）。然后运行 `pnpm install`、`pnpm run check:compat`、`pnpm run typecheck`、`pnpm test`、`pnpm run build` 和本 smoke，再按已验证兼容性维护[安装说明](../../../README.md#install-through-the-web-ui-recommended)；新版本和需要保留支持的旧版本都通过后再提交声明与生成 runtime。
+DSH 升级时，按源码构建需求更新根包与 workspace 包中的精确开发依赖（当前 DSH 包及 Typert generator 为 0.2.2-alpha.2、Cordis 为 4.0.6-alpha.1、Loader 为 1.0.7-alpha.1），同步维护两份 peer 声明和[安装说明](../../../README.md#install-through-the-web-ui-recommended)，并区分安装接受范围与实际验证结果。发布版验证目标单独维护：将新目标加入[验证版本列表](../../../scripts/validation/compatibility-versions.mjs)末尾，再运行默认命令与列表中保留的各个精确旧目标；新旧目标通过后再提交声明与生成 runtime，不把这些结果扩展成整个 peer 范围已实测。新增宿主能力须单独验证，不能仅因发布版安装通过便扩大功能覆盖声明。
 
-For a DSH upgrade, run `node scripts/validation/bump-harness-version.mjs --target <exact version>` to move both manifests' exact development dependencies, the `pnpm-workspace.yaml` release-age exclusions, and the [verification version list](../../../scripts/validation/compatibility-versions.mjs). The declared range already covers 0.2.x, so per-release peer edits are unnecessary (pass `--peer-range` only when the bound must move). Then run `pnpm install`, `pnpm run check:compat`, `pnpm run typecheck`, `pnpm test`, `pnpm run build`, and this smoke, and maintain the [installation guide](../../../README.md#install-through-the-web-ui-recommended) from observed compatibility. Commit the declarations and generated runtime after the new and retained older versions pass.
+For a DSH upgrade, update exact source-build dependencies (currently DSH packages and Typert generator 0.2.2-alpha.2, Cordis 4.0.6-alpha.1, Loader 1.0.7-alpha.1). Keep both peer declarations and the [installation guide](../../../README.md#install-through-the-web-ui-recommended) aligned while distinguishing acceptance from observed validation. Maintain published verification targets separately: append the new release to the [verification version list](../../../scripts/validation/compatibility-versions.mjs), then run the default command and each retained exact older target. Commit declarations and generated runtime after those checks pass; do not generalize those results to every version accepted by the peer range. Verify new Host capabilities separately; a successful release installation does not expand feature-coverage claims.
 
 ## 边界与验证
 

@@ -10,6 +10,7 @@ import { JevPage, type JevConfigValues, type JevPageRemote } from '../src/client
 import { en, zh, type JevLocaleKey } from '../src/client/locales.ts'
 import type { SupervisionConfigValues } from '../src/supervision-types.ts'
 import type { SelectionConfigValues } from '../src/selection-types.ts'
+import { MCP_SELECTION_DEFAULTS, type McpSelectionConfigValues } from '../src/mcp-selection-types.ts'
 import type { StageNavigationConfigValues } from '../src/stage-types.ts'
 import { resolveConnectionIdentity, type JevCredentialStatus, type JevProbeResult, type JevRecordDetail, type JevRecordSummary } from '../src/types.ts'
 import { clientConfig } from './client-fixtures.ts'
@@ -135,6 +136,36 @@ function renderPage(form: ConfigForm<JevConfigValues>, jev: JevPageRemote, selec
 }
 
 describe('Jev bundle page', () => {
+  it('keeps localized MCP controls independent from skill selection settings and feature enablement', async () => {
+    const { form, mutate: publicMutate } = formStub()
+    const selection = selectionFormStub()
+    const jev = remoteStub()
+    jev.listFeatures = vi.fn(async () => [{ id: 'mcp-selection', name: 'MCP selection', description: 'Host description', enabled: false }])
+    const snapshot: ConfigFormSnapshot<McpSelectionConfigValues> = {
+      status: 'ready', value: structuredClone(MCP_SELECTION_DEFAULTS), base: {}, user: {}, revision: 7, writable: true, mode: 'host',
+    }
+    const mutate = vi.fn(async () => true)
+    const mcpSelectionForm: ConfigForm<McpSelectionConfigValues> = {
+      getSnapshot: () => snapshot, subscribe: () => () => {}, mutate,
+      set: async () => false, unset: async () => false,
+    }
+    render(<JevPage view="page" form={form} selectionForm={selection.form} mcpSelectionForm={mcpSelectionForm}
+      jev={jev} notifySuccess={() => {}} t={(key: JevLocaleKey) => zh[key]} />)
+    expect(await screen.findByText(zh.mcpSelectionDescription)).toBeTruthy()
+    expect(screen.getByRole('switch', { name: `${zh.enable} ${zh.mcpSelectionName}` }).getAttribute('aria-checked')).toBe('false')
+    expect((screen.getByLabelText(zh.skillMinProbability) as HTMLInputElement).value).toBe('0.5')
+    fireEvent.change(screen.getByLabelText(zh.mcpToolLimit), { target: { value: '6' } })
+    fireEvent.change(screen.getByLabelText(zh.mcpPinnedTools), { target: { value: 'mcp__server__tool' } })
+    fireEvent.click(screen.getByRole('button', { name: zh.saveMcpSelection }))
+    await waitFor(() => expect(mutate).toHaveBeenCalledWith(expect.arrayContaining([
+      { op: 'set', path: ['toolLimit'], value: 6 },
+      { op: 'set', path: ['pinnedTools'], value: ['mcp__server__tool'] },
+    ]), 7))
+    expect(selection.mutate).not.toHaveBeenCalled()
+    expect(publicMutate).not.toHaveBeenCalled()
+    expect(form.getSnapshot().value?.features['mcp-selection']).toBeUndefined()
+  })
+
   it('edits bounded stage limits without changing the independent feature switch', async () => {
     const { form } = formStub()
     const jev = remoteStub()
@@ -319,7 +350,7 @@ describe('Jev selection counts', () => {
 
   it('saves every selection setting in one revision-aware mutation', async () => {
     const { form } = formStub()
-    const selection = selectionFormStub()
+    const selection = selectionFormStub({ initial: { skillLimit: 5, skillMinProbability: 0.8, fileCandidates: 40, fileLimit: 12 } })
     const notifySuccess = vi.fn()
     renderPage(form, remoteStub(), selection.form, notifySuccess)
     await waitFor(() => { expect((screen.getByLabelText(en.skillSummaryCount) as HTMLInputElement).value).toBe('5') })
@@ -508,7 +539,7 @@ describe('saved Jev and Luna connections', () => {
   it('saves and restores all three connections without changing feature switches or shared limits', async () => {
     const initial = clientConfig({ features: { example: true, 'test-log-admission': false }, timeoutMs: 24000 })
     const { form, mutate } = formStub(true, initial)
-    const selection = selectionFormStub({ initial: { skillLimit: 8, fileCandidates: 77, fileLimit: 19 } })
+    const selection = selectionFormStub({ initial: { skillLimit: 8, skillMinProbability: 0.8, fileCandidates: 77, fileLimit: 19 } })
     const jev = remoteStub()
     renderPage(form, jev, selection.form)
     await screen.findByText(en.noFeatures)

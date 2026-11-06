@@ -9,7 +9,10 @@ import { defineTool } from "@deepseek-ai/dsh-tools";
 /** Jev selectors at the existing skill catalog and glob tool seams. */
 const Config = s.object({
 	skillLimit: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(5).volatile(),
-	skillMinProbability: s.number().min(0).max(1).default(.5).volatile(),
+	skillMinProbability: s.transform(s.number().min(0).max(1), (value) => {
+		if (!Number.isFinite(value)) throw new Error("skillMinProbability must be finite");
+		return value;
+	}).default(.5).volatile(),
 	fileCandidates: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(40).volatile(),
 	fileLimit: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(12).volatile()
 });
@@ -105,7 +108,7 @@ function injectedSkillNames(agent) {
 function validAnswers(items, response) {
 	return response.answers.length === items.length && response.answers.every((answer, index) => answer.id === "candidate-" + index && answer.kind === "noul");
 }
-function ranked(items, response) {
+function scored(items, response) {
 	return items.map((item, index) => {
 		const answer = response.answers[index];
 		if (answer?.id !== "candidate-" + index || answer.kind !== "noul") throw new Error("Jev returned an incomplete ranking");
@@ -115,7 +118,10 @@ function ranked(items, response) {
 			probability: answer.probability,
 			...answer.confidence === void 0 ? {} : { confidence: answer.confidence }
 		};
-	}).sort((a, b) => b.probability - a.probability || a.index - b.index);
+	});
+}
+function byProbability(a, b) {
+	return b.probability - a.probability || a.index - b.index;
 }
 function question(index, prompt) {
 	return {
@@ -124,7 +130,7 @@ function question(index, prompt) {
 		prompt
 	};
 }
-function selectedCatalog(items, fullFingerprint, total, selectedCount, minProbability) {
+function selectedCatalog(items, fullFingerprint, total, selectedCount, selection) {
 	const entries = items.map(({ item }) => ({
 		name: item.name,
 		description: item.description
@@ -135,13 +141,14 @@ function selectedCatalog(items, fullFingerprint, total, selectedCount, minProbab
 			kind: "jev-skill-catalog",
 			form: "catalog",
 			entries,
-			fullFingerprint
+			fullFingerprint,
+			selection
 		},
 		content: [{
 			type: "text",
 			text: [
 				"<system-reminder>",
-				"Jev selected " + selectedCount + " of " + total + " model-invocable skills with relevance probability at least " + minProbability + ". These " + items.length + " new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.",
+				selectedCount === 0 ? "No skill reached the minimum relevance probability in this judgment. Continue the task." : "Jev selected " + selectedCount + " of " + total + " model-invocable skills with relevance probability at least " + selection.skillMinProbability + ". These " + items.length + " new summaries supplement the catalogs already visible in this session. Probabilities estimate relevance, not task success.",
 				"<available_skills>",
 				...lines,
 				"</available_skills>",
@@ -321,25 +328,23 @@ function apply(ctx, config) {
 			}
 		});
 		if (outcome.kind !== "ok") throw new JevError("CANCELLED", "Skill selection was cancelled or could not be adopted");
-		const chosen = ranked(current, outcome.response).filter(({ probability }) => probability >= currentMinProbability).slice(0, currentLimit);
+		const chosen = scored(current, outcome.response).filter((item) => item.probability >= currentMinProbability).sort(byProbability).slice(0, currentLimit);
 		const existing = injectedSkillNames(agent);
 		const additions = chosen.filter(({ item }) => !existing.has(item.name));
 		checkedDirectories.set(agent, {
 			fingerprint: currentFingerprint,
 			replaceGeneration: agent.session.surface.replaceGeneration
 		});
-		await ctx.jev.writeReceipt(outcome.operationId, chosen.length === 0 ? {
-			id: "skill-catalog-none-relevant",
+		await ctx.jev.writeReceipt(outcome.operationId, {
+			id: chosen.length === 0 ? "skill-catalog-no-relevant" : additions.length === 0 ? "skill-catalog-no-new" : "skill-catalog-published",
 			status: "observed",
 			at: (/* @__PURE__ */ new Date()).toISOString(),
-			reason: "No skill reached relevance probability " + currentMinProbability
-		} : {
-			id: additions.length === 0 ? "skill-catalog-no-new" : "skill-catalog-published",
-			status: "observed",
-			at: (/* @__PURE__ */ new Date()).toISOString(),
-			...additions.length === 0 ? { reason: "All selected skill names were already visible in session catalogs" } : {}
+			...chosen.length === 0 ? { reason: "No skill reached the minimum relevance probability in this judgment" } : additions.length === 0 ? { reason: "All selected skill names were already visible in session catalogs" } : {}
 		});
-		return replaceCatalog(decision, original, additions.length === 0 ? void 0 : selectedCatalog(additions, currentFingerprint, current.length, chosen.length, currentMinProbability));
+		return replaceCatalog(decision, original, chosen.length > 0 && additions.length === 0 ? void 0 : selectedCatalog(additions, currentFingerprint, current.length, chosen.length, {
+			skillMinProbability: currentMinProbability,
+			skillLimit: currentLimit
+		}));
 	}, { prepend: true });
 	const globRankings = /* @__PURE__ */ new Map();
 	ctx.on("tools/result", (exec) => {
@@ -392,7 +397,7 @@ function apply(ctx, config) {
 		});
 		if (outcome === void 0) return result;
 		if (outcome.kind !== "ok") throw new JevError("CANCELLED", "File ranking was cancelled or could not be adopted");
-		const scores = ranked(value.paths, outcome.response);
+		const scores = scored(value.paths, outcome.response).sort(byProbability);
 		await ctx.jev.writeReceipt(outcome.operationId, {
 			id: "glob-paths-ranked",
 			status: "observed",

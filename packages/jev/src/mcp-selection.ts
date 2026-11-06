@@ -4,7 +4,7 @@ import type { Context, Volatile } from '@deepseek-ai/cordis'
 import s from '@deepseek-ai/schemastery'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { createUserMessage, type Message, type ToolSchema, type UserMessage } from '@deepseek-ai/dsh-llm'
-import type { PromptAssembly } from '@deepseek-ai/dsh-system-prompt'
+import type { PromptAssembly, PromptPresentation } from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-settings'
 import type { JevJudgeOnceResult } from './index.ts'
@@ -75,10 +75,26 @@ function validAnswers(response: JevResponse, count: number): boolean {
       && answer.probability >= 0 && answer.probability <= 1)
 }
 
+/** Older Hosts expose declarations in this public waterfall; current ones expose only text. */
+function hasAssemblyTools(presentation: PromptPresentation): presentation is PromptAssembly {
+  return 'tools' in presentation && Array.isArray(presentation.tools)
+}
+
 export function apply(ctx: Context, config: Config): void {
+  // Conservatively opt out on Hosts exposing step-owned activation (including
+  // the provider-owned 0.2.2-alpha.2 API). Conditions/restrictions also deny
+  // execution, so they are NOT a replacement for definition-only selection.
+  // That API has no public executor getter or async schema-transform hook.
+  // Do not patch providers or LLM requests; mixed/custom Hosts also opt out.
+  const providerOwnedTools = typeof (ctx.tools as { resolve?: unknown }).resolve === 'function'
   ctx.effect(() => ctx.jev.registerFeature({ id: FEATURE, name: 'MCP tool selection',
-    description: 'Select native MCP tool definitions for the current task without changing permissions' }))
+    description: providerOwnedTools
+      ? 'Unavailable on this Host: provider-owned tool declarations have no public definition-only selection hook. Native tools and approvals remain unchanged.'
+      : 'Select native MCP tool definitions for the current task without changing permissions' }))
   ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), 'jev-mcp-selection.settings')
+  // Fail open without a judgment or recovery-helper registration. In particular,
+  // helpers must not leak into native schemas or the untouched PTC SDK.
+  if (providerOwnedTools) return
   let states = new WeakMap<Agent, State>()
   const claims = new WeakMap<Agent, { turn: number; messages: UserMessage[] }>()
   const prepared = new WeakMap<Agent, Prepared>()
@@ -269,6 +285,9 @@ export function apply(ctx: Context, config: Config): void {
 
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
     const original = await next()
+    // Structural payload check also protects mixed/unknown Hosts. A text-only
+    // presentation must never be cast into an editable tool assembly.
+    if (!hasAssemblyTools(original)) return original
     const baseline = withoutHelpers(original)
     const agent = context.agent
     if (!live(agent) || !context.signal) return baseline

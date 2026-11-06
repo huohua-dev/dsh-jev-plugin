@@ -1,7 +1,8 @@
 /**
  * Opt-in measurement against the real Jev endpoint. Skipped unless JEV_LIVE=1 and JEV_API_KEY are both set,
- * so the default suite never needs credentials or spends money. Each case sends one judgment; the catalog is a
- * fixed set of synthetic definitions and no MCP server is started. The key is read only from the environment and
+ * so the default suite never needs credentials or spends money. On supported legacy Hosts each case sends one
+ * judgment; provider-owned Hosts instead verify the no-judgment compatibility fallback. The catalog is a fixed
+ * set of synthetic definitions and no MCP server is started. The key is read only from the environment and
  * is never printed or written.
  *
  *   JEV_LIVE=1 JEV_API_KEY=… node node_modules/vitest/vitest.mjs run packages/jev/tests/mcp-selection-live.test.ts
@@ -121,8 +122,9 @@ async function fixture(options: { toolLimit: number; minProbability: number; wai
 }
 
 describe.skipIf(!live)('native MCP selection against the real Jev endpoint (opt-in)', () => {
-  it('measures latency, score separation and selection quality on a mixed multi-server catalog', async () => {
+  it('measures selection on supported legacy Hosts; verifies no paid request on provider-owned Hosts', async () => {
     const { ctx, harness } = await fixture({ toolLimit: 12, minProbability: 0.5, waitMs: 60_000 })
+    const unsupported = typeof (ctx.tools as { resolve?: unknown }).resolve === 'function'
     const rows: string[] = []
     for (const task of TASKS) {
       const agent = await harness.create(SessionId(`live-${task.id}`))
@@ -134,6 +136,13 @@ describe.skipIf(!live)('native MCP selection against the real Jev endpoint (opt-
       const shown = assembly.tools.map(tool => tool.name).filter(mcpSelection.isMcpPublicName)
       const servers = [...new Set(shown.map(serverOf))].sort()
       const records = await ctx.jev.listRecords({ sessionId: agent.session.id, limit: 5 })
+      if (unsupported) {
+        expect(records.items).toEqual([])
+        expect(shown).toHaveLength(CATALOG.length)
+        expect(assembly.tools.some(tool => ['mcp_catalog', 'mcp_load'].includes(tool.name))).toBe(false)
+        rows.push(JSON.stringify({ task: task.id, status: 'unsupported-host-no-judgment', shown: shown.length }))
+        continue
+      }
       const detail = records.items[0] ? await ctx.jev.getRecord(records.items[0].id) : null
       const answers = detail?.attemptRecords[0]?.response?.answers ?? []
       const scores = answers.map(answer => (answer.kind === 'noul' ? answer.probability : NaN))

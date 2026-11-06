@@ -203,6 +203,21 @@ describe('MCP selection settings', () => {
     expect(mutate).not.toHaveBeenCalled()
   })
 
+  it.each([en, zh])('shows the Host capability warning instead of claiming MCP selection is available', async locale => {
+    const main = formStub<JevConfigValues>({ baseUrl: '', model: 'fixture', credentialRef: 'FIXTURE_KEY', timeoutMs: 30000, features: {} })
+    const jev: JevPageRemote = {
+      listFeatures: vi.fn(async () => [{ id: 'mcp-selection', name: 'MCP tool selection', description: 'Unavailable on this Host: no public definition-only selection hook.', enabled: false }]),
+      listRecords: vi.fn(async () => ({ items: [] })), getRecord: vi.fn(async () => null),
+      testConnection: vi.fn(),
+      getCredentialStatus: vi.fn(async connection => ({ connection, configured: false, writable: true })),
+      setCredential: vi.fn(async connection => ({ connection, configured: true, writable: true })),
+    }
+    render(<JevPage view="page" form={main.form} jev={jev} notifySuccess={vi.fn()} t={key => locale[key]} />)
+    expect(await screen.findByText(locale.mcpSelectionUnavailable)).toBeTruthy()
+    expect(screen.queryByText(locale.mcpSelectionDescription)).toBeNull()
+    expect(jev.testConnection).not.toHaveBeenCalled()
+  })
+
   it.each([en, zh])('localizes the feature and keeps it disabled while its independent settings are saved', async locale => {
     const main = formStub<JevConfigValues>({ baseUrl: '', model: 'fixture', credentialRef: 'FIXTURE_KEY', timeoutMs: 30000, features: {} })
     const mcp = formStub(defaults)
@@ -210,8 +225,8 @@ describe('MCP selection settings', () => {
       listFeatures: vi.fn(async () => [{ id: 'mcp-selection', name: 'Host name', description: 'Host description', enabled: false }]),
       listRecords: vi.fn(async () => ({ items: [] })), getRecord: vi.fn(async () => null),
       testConnection: vi.fn(async () => ({ ok: true, latencyMs: 0, recordId: 'fixture' })),
-      getCredentialStatus: vi.fn(async () => ({ configured: false, writable: true })),
-      setCredential: vi.fn(async () => ({ configured: true, writable: true })),
+      getCredentialStatus: vi.fn(async connection => ({ connection, configured: false, writable: true })),
+      setCredential: vi.fn(async connection => ({ connection, configured: true, writable: true })),
     }
     const notifySuccess = vi.fn()
     render(<JevPage view="page" form={main.form} mcpSelectionForm={mcp.form} jev={jev} notifySuccess={notifySuccess} t={key => locale[key]} />)

@@ -58,7 +58,8 @@ function featureName(feature: Pick<JevFeatureView, 'id' | 'name'>, t: Translate)
 function featureDescription(feature: JevFeatureView, t: Translate): string {
   if (feature.id === 'shared-findings') return t('sharedFindingsDescription')
   if (feature.id === 'stage-navigation') return t('stageNavigationDescription')
-  if (feature.id === 'mcp-selection') return t('mcpSelectionDescription')
+  if (feature.id === 'mcp-selection') return feature.description.startsWith('Unavailable on this Host:')
+    ? t('mcpSelectionUnavailable') : t('mcpSelectionDescription')
   return feature.description
 }
 
@@ -338,7 +339,7 @@ function SelectionSettings({ form, notifySuccess, t }: {
   }
 
   const save = async () => {
-    const parsed = {} as SelectionConfigValues
+    const parsed = {} as Pick<SelectionConfigValues, SelectionField>
     const nextErrors: Partial<Record<SelectionField, boolean>> = {}
     for (const { key, ratio } of SELECTION_FIELDS) {
       const value = ratio ? parseRatio(draft[key]) : parsePositiveInteger(draft[key])
