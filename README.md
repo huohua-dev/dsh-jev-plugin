@@ -1,6 +1,6 @@
 # deepseek-harness-jev
 
-> **Security-fix branch, not merged into main:** this branch retains the existing DSH 0.2.1-rc.2 baseline and fork MCP selection, patches known dependency vulnerabilities, and backports stage-argument redaction and current-directory/PTC approval fixes. The newer Host upgrade remains deferred. See the [security report](docs/reviews/2026-11-06-preserve-mcp-security.md); installation URLs below refer to historical upstream releases, not this unmerged fork branch.
+> **Security fixes integrated into main:** this fork retains the existing DSH 0.2.1-rc.2 baseline and MCP selection, patches known dependency vulnerabilities, and backports stage-argument redaction and current-directory/PTC approval fixes. The newer Host upgrade remains deferred; the full upstream review is preserved by tag `archive/upstream-review-20261106`. See the [security report](docs/reviews/2026-11-06-preserve-mcp-security.md); installation URLs below refer to historical upstream releases, not this fork.
 
 English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 

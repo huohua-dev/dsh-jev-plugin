@@ -2,7 +2,7 @@
 
 ## 分支决策
 
-用户选择保留现有功能、暂缓新版宿主升级。`fix/security-preserve-mcp-20261106` 从原 `main` 的 `82984b4` 创建，不包含全量上游合并；本地/GitHub main 不修改，真实 profile 不变。全量上游仍保留在 `sync/upstream-20261106` 供审查，不推荐替代当前部署。
+用户最初选择保留现有功能、暂缓新版宿主升级。安全修复提交 `dd41755` 从原 `main` 的 `82984b4` 创建，不包含全量上游合并。2026-11-06 后续明确授权将安全修复合入本地及 GitHub main，并清理旧分支；真实 profile 不变。全量上游审查提交 `281fc8c` 由本地及远程标签 `archive/upstream-review-20261106` 归档，不合入 main，不推荐替代当前部署。
 
 保留 DSH **0.2.1-rc.2**、Cordis 4.0.5、Typert generator 0.2.1-alpha.2 的现有基线与全部 DeepSeek 开发依赖 pin；原 MCP/技能筛选实现和旧插话实现不变。不是把新版 Host 上的 MCP 筛选恢复了，而是按选择避免引入导致功能缺口的宿主 API 升级。已有 profile 使用更高版本时，本分支不会自动降级其宿主。
 
