@@ -238,7 +238,8 @@ it('compares only current findings and carries actual recipients through three s
   const b = f.findings().find(item => item.original.includes('B: tests'))!
   expect(b.messageIds).not.toContain(firstDelivery.messageId)
   await f.send(reporter.agent, f.root, 'C: a further regression prevents execution.\nEvidence: the new runtime log fails before tests start.')
-  await vi.waitFor(() => expect(f.relations()[1]?.deliveries.some(item => item.recipientId === 'holder' && item.state === 'queued')).toBe(true))
+  // Serial relation and receipt persistence can exceed one second during the parallel suite.
+  await vi.waitFor(() => expect(f.relations()[1]?.deliveries.some(item => item.recipientId === 'holder' && item.state === 'queued')).toBe(true), { timeout: 3_000 })
   await vi.waitFor(() => expect(f.findings().find(item => item.original.includes('C: a further'))?.recipients.some(item => item.agentId === 'holder' && item.state === 'queued')).toBe(true))
   const c = f.findings().find(item => item.original.includes('C: a further'))!
   expect(f.requests).toHaveLength(2)

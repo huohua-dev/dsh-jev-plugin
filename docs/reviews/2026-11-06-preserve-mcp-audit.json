@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-06",
+  "command": "pnpm audit --json",
+  "exitCode": 0,
+  "advisories": {},
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 4,
+    "devDependencies": 858,
+    "optionalDependencies": 184,
+    "totalDependencies": 862
+  },
+  "limitations": [
+    "Known advisory match only; not proof of no backdoors or unknown vulnerabilities.",
+    "Applies to this lockfile; does not modify installed user Host dependencies."
+  ]
+}

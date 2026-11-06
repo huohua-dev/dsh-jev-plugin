@@ -1,5 +1,7 @@
 # deepseek-harness-jev
 
+> **安全修复分支，尚未合入 main：**本分支保留 DSH 0.2.1-rc.2 基线和 fork 原有 MCP 筛选，修复已知依赖漏洞，回移阶段参数脱敏、当前目录与 PTC 审批修复；暂缓新版宿主升级。详见[安全报告](docs/reviews/2026-11-06-preserve-mcp-security.md)。下方安装地址指向历史上游版本，不是本未合并分支。
+
 [English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
 **DeepSeek Harness（DSH）的原生插件：使用 Jev 或 Luna Decisions 提供判断。**

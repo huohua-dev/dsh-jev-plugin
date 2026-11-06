@@ -12,7 +12,7 @@ import { SandboxedFileSystem } from '@deepseek-ai/dsh-fs-sandbox'
 import { createUserMessage, LlmAdapter, ToolCallId, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm'
 import { PtcRuntime, type PtcRunRequest, type PtcRunResult, type PtcRunSpec } from '@deepseek-ai/dsh-ptc-runtime'
 import { ShellExecutor, type ShellExecRequest, type ShellExecSpec, type ShellExecution } from '@deepseek-ai/dsh-shell'
-import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
+import SandboxPolicy, { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import Storage from '@deepseek-ai/dsh-storage'
@@ -65,6 +65,7 @@ class PtcFixture extends PtcRuntime {
 }
 class ShellFixture extends ShellExecutor {
   modes: string[] = []
+  workdirs: string[] = []
   override get sandboxMode() { return 'workspace-write' as const }
   resolve(request: ShellExecRequest): ShellExecSpec {
     return { command: request.command, workdir: request.workdir ?? process.cwd(),
@@ -74,6 +75,7 @@ class ShellFixture extends ShellExecutor {
   }
   async execute(spec: ShellExecSpec): Promise<ShellExecution> {
     this.modes.push(spec.sandboxPolicy?.mode ?? 'none')
+    this.workdirs.push(spec.workdir)
     const silent = { readFrom: (fromByte: number) => ({ text: '', nextOffset: fromByte, lossy: false }) }
     return { status: 'completed', exitCode: 0, signal: null, done: Promise.resolve(),
       readOutput: () => ({ delta: '', lossy: false }), observed: { stdout: silent, stderr: silent }, kill: () => false,
@@ -83,7 +85,7 @@ class ShellFixture extends ShellExecutor {
   }
 }
 
-interface Wire { state: { currentContext: { pending: unknown[] }; operation: { tool: string; arguments: object }; script: { status: string; content?: string } }; questions: object }
+interface Wire { state: { currentContext: { pending: unknown[] }; operation: { tool: string; arguments: object; cwd: string; workspaceRoot: string; target?: string }; script: { status: string; path?: string; content?: string } }; questions: object }
 type Reply = { choice: 'approve' | 'unauthorized' | 'unknown' } | { invalid: true } | (() => Promise<{ choice: 'approve' | 'unauthorized' | 'unknown' }>)
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const clean of cleanups.splice(0).reverse()) await clean() })
@@ -220,7 +222,7 @@ it('does not consult Jev for a pre-execute hook ask or a monotonic guard refusal
   await expect(readFile(join(guard.workspace, 'guarded.txt'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
 })
 
-it('does not reuse an active write for another call id or plugin_manager request', async () => {
+it('does not reuse an active write for another call, tool, or cancellation signal', async () => {
   const h = await fixture([call('accurate', 'write', { file_path: 'accurate.txt', content: 'native', sandbox_permissions: 'danger-full-access', justification: 'Write file' }), text('done')], [{ choice: 'approve' }])
   let human = 0
   h.ctx.on('approval/request', () => { human++; return Promise.resolve<ApprovalOutcome>('rejected') })
@@ -230,13 +232,17 @@ it('does not reuse an active write for another call id or plugin_manager request
         reason: 'escalate sandbox to danger-full-access: Write file', signal: exec.signal })).toBe('rejected')
       expect(await h.ctx.approval.request({ agent: exec.agent!, callId: exec.callId, toolName: 'plugin_manager',
         reason: 'escalate sandbox to danger-full-access: Write file', signal: exec.signal })).toBe('rejected')
+      expect(await h.ctx.approval.request({ agent: exec.agent!, callId: exec.callId, toolName: 'write',
+        reason: 'escalate sandbox to danger-full-access: Write file', signal: new AbortController().signal })).toBe('rejected')
+      expect(await h.ctx.approval.request({ agent: exec.agent!, callId: exec.callId, toolName: 'write',
+        reason: 'escalate sandbox to danger-full-access: Write file' })).toBe('rejected')
     }
     return next()
   })
   await h.send()
-  expect(human).toBe(2)
+  expect(human).toBe(4)
   expect(h.received).toHaveLength(1)
-  expect(h.outcomes()).toEqual(['rejected', 'rejected', 'allowed-once'])
+  expect(h.outcomes()).toEqual(['rejected', 'rejected', 'rejected', 'rejected', 'allowed-once'])
 })
 
 it('leaves an invalid native write with its fixed validation failure before approval', async () => {
@@ -514,12 +520,45 @@ it('does not judge disabled, read-only, full-access, or never sessions', async (
 
 it('keeps PTC outer approval distinct from its program run', async () => {
   const h = await fixture([call('ptc-1', 'run_code', { code: 'return 1', description: 'Run validation', sandbox_permissions: 'danger-full-access', justification: 'Write build cache' }), text('done')], [{ choice: 'approve' }], { ptc: true })
+  let dispatchSignal: AbortSignal | undefined
+  let approvalSignal: AbortSignal | undefined
+  h.ctx.on('tools/execute', (exec, next) => { dispatchSignal = exec.signal; return next() })
+  h.ctx.on('approval/request', (req, next) => { approvalSignal = req.signal; return next() }, { prepend: true })
   await h.send()
+  // The published rc.2 PTC transport adds sandbox-mode cancellation before asking.
+  expect(dispatchSignal).toBeDefined()
+  expect(approvalSignal).toBeDefined()
+  expect(approvalSignal).not.toBe(dispatchSignal)
   expect(h.received).toHaveLength(1)
   expect(h.received[0]?.state.operation.tool).toBe('run_code')
   expect(h.outcomes()).toEqual(['allowed-once'])
   expect(h.ptc?.runs).toBe(1)
   expect(h.ptc?.last?.sandboxPolicy?.mode).toBe('danger-full-access')
+})
+
+it('keeps PTC approval bound to the exact active call, tool, reason, and a present signal', async () => {
+  const h = await fixture([call('ptc-binding', 'run_code', { code: 'return 1', description: 'Run validation',
+    sandbox_permissions: 'danger-full-access', justification: 'Write build cache' }), text('done')], [{ choice: 'approve' }], { ptc: true })
+  let human = 0
+  h.ctx.on('approval/request', () => { human++; return Promise.resolve<ApprovalOutcome>('rejected') })
+  h.ctx.on('tools/execute', async (exec, next) => {
+    if (exec.name === 'run_code') {
+      const request = { agent: exec.agent!, callId: exec.callId, toolName: exec.name,
+        reason: 'escalate sandbox to danger-full-access: Write build cache', signal: exec.signal }
+      for (const mismatch of [
+        { callId: ToolCallId('other-ptc-call') },
+        { toolName: 'write' },
+        { reason: 'escalate sandbox to danger-full-access: Other operation' },
+        { signal: undefined },
+      ]) expect(await h.ctx.approval.request({ ...request, ...mismatch })).toBe('rejected')
+    }
+    return next()
+  })
+  await h.send()
+  expect(human).toBe(4)
+  expect(h.received).toHaveLength(1)
+  expect(h.outcomes()).toEqual(['rejected', 'rejected', 'rejected', 'rejected', 'allowed-once'])
+  expect(h.ptc?.runs).toBe(1)
 })
 
 it('judges PTC outer and inner native tool escalations as separate calls', async () => {
@@ -530,6 +569,28 @@ it('judges PTC outer and inner native tool escalations as separate calls', async
   expect(h.outcomes()).toEqual(['allowed-once', 'allowed-once'])
   expect(h.ptc?.runs).toBe(1)
   expect(await readFile(join(h.workspace, 'inner.txt'), 'utf8')).toBe('inside')
+})
+
+it('cancels a PTC judgment after a native sandbox-mode change without granting or running the program', async () => {
+  const entered = Promise.withResolvers<void>()
+  const response = Promise.withResolvers<{ choice: 'approve' }>()
+  const h = await fixture([call('ptc-mode-change', 'run_code', { code: 'return 1', description: 'Run validation',
+    sandbox_permissions: 'danger-full-access', justification: 'Write build cache' }), text('done')],
+  [async () => { entered.resolve(); return response.promise }], { ptc: true })
+  const pending = h.send()
+  await entered.promise
+  setSandboxMode(h.agent.session, 'read-only')
+  response.resolve({ choice: 'approve' })
+  await pending
+  expect(h.received).toHaveLength(1)
+  expect(h.outcomes()).toEqual(['cancelled'])
+  expect(h.ptc?.runs).toBe(0)
+  const record = (await h.ctx.jev.listRecords({ featureId: 'workspace-approval' })).items[0]!
+  await vi.waitFor(async () => {
+    const detail = await h.ctx.jev.getRecord(record.id)
+    expect(detail?.status).toBe('cancelled')
+    expect(detail?.receipts.some(receipt => receipt.id === 'grant-issued')).toBe(false)
+  })
 })
 
 it.each([
@@ -544,4 +605,118 @@ it.each([
   expect(h.received[0]?.state.script).toMatchObject({ status: 'read', content: 'fixture script content\n' })
   expect(h.shell?.modes).toEqual(['danger-full-access'])
   expect(h.outcomes()).toEqual(['allowed-once'])
+})
+
+it.each(['write', 'edit'] as const)('judges the native %s target in the current directory while retaining the original sandbox boundary', async tool => {
+  const args = tool === 'write' ? { content: 'updated' } : { old_string: 'original', new_string: 'updated' }
+  const h = await fixture([call('changed-target', tool, { file_path: 'target.txt', ...args,
+    sandbox_permissions: 'danger-full-access', justification: 'Update target' }), text('done')], [{ choice: 'approve' }])
+  const changed = join(h.workspace, 'changed')
+  await mkdir(changed)
+  await writeFile(join(changed, 'target.txt'), 'original')
+  await h.ctx.workingDirectory.set(h.agent, changed)
+  await h.send()
+  expect(await readFile(join(changed, 'target.txt'), 'utf8')).toBe('updated')
+  expect(h.received[0]?.state.operation).toMatchObject({ cwd: changed, target: join(changed, 'target.txt'), workspaceRoot: h.workspace })
+  expect(h.agent.session.header.cwd).toBe(h.workspace)
+})
+
+it.each([
+  { tool: 'bash', command: 'python scripts/fix.py', script: 'fix.py', relativeWorkdir: undefined },
+  { tool: 'pwsh', command: 'pwsh -File scripts/fix.ps1', script: 'fix.ps1', relativeWorkdir: undefined },
+  { tool: 'bash', command: 'python scripts/fix.py', script: 'fix.py', relativeWorkdir: 'nested' },
+  { tool: 'pwsh', command: 'pwsh -File scripts/fix.ps1', script: 'fix.ps1', relativeWorkdir: 'nested' },
+])('reads the actual $tool script after a directory change with workdir $relativeWorkdir', async ({ tool, command, script, relativeWorkdir }) => {
+  const h = await fixture([call('changed-script', tool, { command, description: 'Run direct script',
+    ...relativeWorkdir ? { workdir: relativeWorkdir } : {},
+    sandbox_permissions: 'danger-full-access', justification: 'Run script once' }), text('done')], [{ choice: 'approve' }], { shell: true })
+  const changed = join(h.workspace, 'changed')
+  const actualCwd = relativeWorkdir ? join(changed, relativeWorkdir) : changed
+  const oldCwd = relativeWorkdir ? join(h.workspace, relativeWorkdir) : h.workspace
+  await mkdir(join(actualCwd, 'scripts'), { recursive: true })
+  await mkdir(join(oldCwd, 'scripts'), { recursive: true })
+  await writeFile(join(actualCwd, 'scripts', script), 'actual script content\n')
+  await writeFile(join(oldCwd, 'scripts', script), 'unrelated original script\n')
+  await h.ctx.workingDirectory.set(h.agent, changed)
+  await h.send()
+  expect(h.shell?.workdirs).toEqual([actualCwd])
+  expect(h.received[0]?.state.script).toEqual({ status: 'read', path: join(actualCwd, 'scripts', script), content: 'actual script content\n' })
+  expect(h.received[0]?.state.operation).toMatchObject({ cwd: actualCwd, workspaceRoot: h.workspace })
+})
+
+it('judges the current directory used by the native run_code program', async () => {
+  const h = await fixture([call('changed-ptc', 'run_code', { code: 'return 1', description: 'Run program',
+    sandbox_permissions: 'danger-full-access', justification: 'Run once' }), text('done')], [{ choice: 'approve' }], { ptc: true })
+  const changed = join(h.workspace, 'changed')
+  await mkdir(changed)
+  await h.ctx.workingDirectory.set(h.agent, changed)
+  await h.send()
+  expect(h.ptc?.last?.cwd).toBe(changed)
+  expect(h.received[0]?.state.operation).toMatchObject({ cwd: changed, workspaceRoot: h.workspace })
+})
+
+it('does not adopt approval when the committed directory changes during judgment without a visible notice', async () => {
+  const entered = Promise.withResolvers<void>()
+  const response = Promise.withResolvers<{ choice: 'approve' }>()
+  const h = await fixture([call('directory-race', 'write', { file_path: 'target.txt', content: 'must not write',
+    sandbox_permissions: 'danger-full-access', justification: 'Update target' }), text('done')],
+  [async () => { entered.resolve(); return response.promise }])
+  const changed = join(h.workspace, 'changed')
+  await mkdir(changed)
+  let human = 0
+  h.ctx.on('approval/request', () => { human++; return Promise.resolve<ApprovalOutcome>('rejected') })
+  const pending = h.send()
+  await entered.promise
+  // A committed native directory event remains authoritative even if its notice is unavailable.
+  h.agent.session.append('working-directory/change', { cwd: changed })
+  response.resolve({ choice: 'approve' })
+  await pending
+  expect(human).toBe(1)
+  expect(h.outcomes()).toEqual(['rejected'])
+  await expect(readFile(join(changed, 'target.txt'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+})
+
+it('refreshes the directory and script when the human retries a failed judgment', async () => {
+  const h = await fixture([call('retry-directory', 'bash', { command: 'python scripts/fix.py', description: 'Run direct script',
+    sandbox_permissions: 'danger-full-access', justification: 'Run once' }), text('done')],
+  [{ invalid: true }, { choice: 'approve' }], { shell: true })
+  const changed = join(h.workspace, 'changed')
+  await mkdir(join(h.workspace, 'scripts'))
+  await mkdir(join(changed, 'scripts'), { recursive: true })
+  await writeFile(join(h.workspace, 'scripts/fix.py'), 'original script\n')
+  await writeFile(join(changed, 'scripts/fix.py'), 'current script\n')
+  h.ctx.on('user-questions/request', async () => {
+    await h.ctx.workingDirectory.set(h.agent, changed)
+    return { answers: [{ id: 'jev-resolution', selected: ['重试 / Retry'] }] }
+  })
+  await h.send()
+  expect(h.received.map(item => [item.state.operation.cwd, item.state.script.content]))
+    .toEqual([[h.workspace, 'original script\n'], [changed, 'current script\n']])
+  expect(h.shell?.workdirs).toEqual([changed])
+  expect(h.outcomes()).toEqual(['allowed-once'])
+})
+
+it('retains original-directory evidence on legacy hosts without the directory service', async () => {
+  const h = await fixture([call('legacy-directory', 'write', { file_path: 'target.txt', content: 'legacy',
+    sandbox_permissions: 'danger-full-access', justification: 'Update target' }), text('done')], [{ choice: 'approve' }])
+  const get = h.consumer.ctx.get.bind(h.consumer.ctx)
+  vi.spyOn(h.consumer.ctx, 'get').mockImplementation(name => name === 'workingDirectory' ? undefined : get(name))
+  await h.send()
+  expect(h.received[0]?.state.operation).toMatchObject({ cwd: h.workspace, target: join(h.workspace, 'target.txt'), workspaceRoot: h.workspace })
+  expect(await readFile(join(h.workspace, 'target.txt'), 'utf8')).toBe('legacy')
+  expect(h.outcomes()).toEqual(['allowed-once'])
+})
+
+it('fails the native call without old-directory evidence when the current directory cannot be resolved', async () => {
+  const h = await fixture([call('failed-directory', 'write', { file_path: 'target.txt', content: 'must not write',
+    sandbox_permissions: 'danger-full-access', justification: 'Update target' }), text('done')], [{ choice: 'approve' }])
+  h.ctx.on('tools/execute', (exec, next) => {
+    if (exec.name === 'write') vi.spyOn(h.ctx.workingDirectory, 'ensure').mockRejectedValueOnce(new Error('Current directory unavailable'))
+    return next()
+  })
+  await h.send()
+  expect(h.received).toHaveLength(0)
+  expect(h.outcomes()).toEqual(['unavailable'])
+  expect((await h.ctx.jev.listRecords({ featureId: 'workspace-approval' })).items[0]?.status).toBe('failed')
+  await expect(readFile(join(h.workspace, 'target.txt'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
 })

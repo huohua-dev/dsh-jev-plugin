@@ -1,5 +1,7 @@
 # deepseek-harness-jev
 
+> **Security-fix branch, not merged into main:** this branch retains the existing DSH 0.2.1-rc.2 baseline and fork MCP selection, patches known dependency vulnerabilities, and backports stage-argument redaction and current-directory/PTC approval fixes. The newer Host upgrade remains deferred. See the [security report](docs/reviews/2026-11-06-preserve-mcp-security.md); installation URLs below refer to historical upstream releases, not this unmerged fork branch.
+
 English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
 **Native DeepSeek Harness (DSH) plugin with Jev or Luna Decisions as its judgment model.**

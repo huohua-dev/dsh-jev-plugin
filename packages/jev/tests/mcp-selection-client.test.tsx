@@ -210,8 +210,8 @@ describe('MCP selection settings', () => {
       listFeatures: vi.fn(async () => [{ id: 'mcp-selection', name: 'Host name', description: 'Host description', enabled: false }]),
       listRecords: vi.fn(async () => ({ items: [] })), getRecord: vi.fn(async () => null),
       testConnection: vi.fn(async () => ({ ok: true, latencyMs: 0, recordId: 'fixture' })),
-      getCredentialStatus: vi.fn(async () => ({ configured: false, writable: true })),
-      setCredential: vi.fn(async () => ({ configured: true, writable: true })),
+      getCredentialStatus: vi.fn(async connection => ({ connection, configured: false, writable: true })),
+      setCredential: vi.fn(async connection => ({ connection, configured: true, writable: true })),
     }
     const notifySuccess = vi.fn()
     render(<JevPage view="page" form={main.form} mcpSelectionForm={mcp.form} jev={jev} notifySuccess={notifySuccess} t={key => locale[key]} />)

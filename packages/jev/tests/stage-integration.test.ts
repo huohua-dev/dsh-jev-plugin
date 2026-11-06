@@ -1,4 +1,5 @@
 /** Cold DSH history, native page authorization, and localhost Jev over a full step. */
+import { createHash } from 'node:crypto'
 import { createServer } from 'node:http'
 import { mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -41,7 +42,7 @@ afterEach(async () => {
   if (failures.length > 0) throw new AggregateError(failures, 'Stage integration cleanup failed')
 })
 
-async function persistedSession(root: string, userText = 'Review the stage fixture. Fake secret: sk-0123456789abcdefghijklmnopqrstuvwxyz'): Promise<{ id: string; cursor: number }> {
+async function persistedSession(root: string, userText = 'Review the stage fixture. Fake secret: sk-0123456789abcdefghijklmnopqrstuvwxyz', argumentsA = '{"id":"a"}'): Promise<{ id: string; cursor: number }> {
   const context = new Context()
   await context.plugin(JsonlPersistence, { root: join(root, 'sessions') })
   const id = SessionId('stage-integration-cold')
@@ -63,11 +64,11 @@ async function persistedSession(root: string, userText = 'Review the stage fixtu
   emit(1, 1, [
     ...Array.from({ length: 17 }, (_, index) => ({ type: 'reasoning' as const, text: `STAGE_T1S1 Think ${index + 1}` })),
     { type: 'text', text: 'STAGE_T1S1 two probes' },
-    { type: 'tool-call', id: callA, name: 'stage_probe', arguments: '{"id":"a"}' },
+    { type: 'tool-call', id: callA, name: 'stage_probe', arguments: argumentsA },
     { type: 'tool-call', id: callB, name: 'stage_probe', arguments: '{"id":"b"}' },
   ])
   for (const [id, marker] of [[callA, 'a'], [callB, 'b']] as const) {
-    session.append('tool/call', { turn: 1, step: 1, callId: id, name: 'stage_probe', arguments: `{"id":"${marker}"}` })
+    session.append('tool/call', { turn: 1, step: 1, callId: id, name: 'stage_probe', arguments: id === callA ? argumentsA : `{"id":"${marker}"}` })
     session.append('tool/result', { turn: 1, step: 1,
       message: createToolResultMessage({ callId: id, content: [{ type: 'text', text: `probe ${marker} done` }], isError: false }),
     }, { surfaceOp: 'append' })
@@ -292,6 +293,38 @@ it('reuses an existing Jev fingerprint unchanged, marks it stale for Luna, and r
   expect(http.errors).toEqual([])
 })
 
+it('marks cached v2 redaction classifications stale without automatically dispatching', async () => {
+  const dir = await stageRoot()
+  const seeded = await persistedSession(dir)
+  const http = await stageFixture()
+  const { ctx } = await host(dir, http.endpoint, { beforeStages: async ctx => {
+    const observation = await ctx.sessionQuery.observeSession(SessionId(seeded.id), { projectionMode: 'none' })
+    const turns = assembleStageHistory(seeded.id, observation.events as readonly SessionEvent[])
+    observation[Symbol.dispose]()
+    const step = turns[0]!.steps[0]!
+    const identity = JSON.stringify(ctx.jev.stageConnectionIdentity())
+    const input = buildStageInput(turns, step,
+      { previousSteps: 2, previousChars: 700, maxRequestChars: 48_000 }, identity, ['localhost-stage-fixture'])
+    expect(input.kind).toBe('ready')
+    if (input.kind !== 'ready') return
+    // This fixture's simple tool JSON is identical under v2 and v3; only the rules version changes.
+    const oldRequest = { ...input.request, state: { ...input.request.state as object, redactionVersion: 'credential-patterns-v2' } }
+    const oldFingerprint = createHash('sha256').update(JSON.stringify([
+      STAGE_RULE_VERSION, 'credential-patterns-v2', identity, JSON.stringify(oldRequest),
+    ])).digest('hex')
+    expect(input.fingerprint).not.toBe(oldFingerprint)
+    const domain = await ctx.storageDomain.open(stageStoreSpec(join(dir, 'profile')))
+    try {
+      await domain.table('records').put('v2-stage', { id: 'v2-stage', sessionId: seeded.id, stepId: step.id, revision: 1,
+        sourceFingerprint: oldFingerprint, ruleVersion: STAGE_RULE_VERSION, status: 'succeeded', label: 'implementation', model: 'v2-result' })
+    } finally { await domain.close() }
+  } })
+  const snapshot = await ctx.jev.getStageNavigation(seeded.id, new AbortController().signal)
+  expect(snapshot.turns[0]?.steps[0]?.analysis).toMatchObject({ status: 'stale', model: 'v2-result' })
+  expect(http.calls).toHaveLength(0)
+  expect(http.errors).toEqual([])
+})
+
 it('redacts every saved connection credential before native dispatch and keeps original history untouched', async () => {
   const dir = await stageRoot()
   const secrets = { STAGE_FIXTURE_KEY: 'legacy-secret-fixture', JEV_LUNA_OPENROUTER_API_KEY: 'router-secret-fixture', JEV_LUNA_OPENAI_API_KEY: 'official-secret-fixture' }
@@ -303,7 +336,8 @@ it('redacts every saved connection credential before native dispatch and keeps o
   const source = await ctx.jev.getStageNavigation(seeded.id, signal)
   for (const secret of Object.values(secrets)) expect(JSON.stringify(source.turns)).toContain(secret)
   await ctx.jev.startStageAnalysis({ sessionId: seeded.id, scope: { kind: 'turn', turn: 1 }, mode: 'missing' })
-  await vi.waitFor(async () => { expect((await ctx.jev.getStageNavigation(seeded.id, signal)).batch?.status).toBe('completed') })
+  // A batch includes serial localhost judgments and durable writes under parallel-suite load.
+  await vi.waitFor(async () => { expect((await ctx.jev.getStageNavigation(seeded.id, signal)).batch?.status).toBe('completed') }, { timeout: 3_000 })
   const snapshot = await ctx.jev.getStageNavigation(seeded.id, signal)
   expect(snapshot.turns[0]?.steps[0]?.analysis).toMatchObject({ status: 'succeeded', connectionId: 'luna-openai', configuredModel: 'gpt-6-luna', model: 'stage-official-returned' })
   const detail = await ctx.jev.getStageAnalysisRecord(seeded.id, source.turns[0]!.steps[0]!.id)
@@ -314,6 +348,33 @@ it('redacts every saved connection credential before native dispatch and keeps o
     expect(JSON.stringify(detail)).not.toContain(secret)
     expect(JSON.stringify(snapshot.turns)).toContain(secret)
   }
+  expect(http.calls).toHaveLength(2)
+  expect(http.errors).toEqual([])
+})
+
+it('redacts JSON tool arguments before HTTP dispatch and ledger storage without changing durable history', async () => {
+  const dir = await stageRoot()
+  const secret = 'configured\\dummy"credential'
+  const argumentsA = JSON.stringify({ command: 'API_KEY="synthetic two word secret" npm run build',
+    nested: [{ value: secret, api_key: 'nested dummy key' }], cwd: '/workspace', flags: [true, 2, null] })
+  const seeded = await persistedSession(dir, 'Review this synthetic tool call.', argumentsA)
+  const http = await stageFixture()
+  const { ctx } = await host(dir, http.endpoint, { resolve: async () => ({ value: secret, source: 'fixture' }) })
+  const signal = new AbortController().signal
+  await ctx.jev.startStageAnalysis({ sessionId: seeded.id, scope: { kind: 'turn', turn: 1 }, mode: 'missing' })
+  // A batch includes serial localhost judgments and durable writes under parallel-suite load.
+  await vi.waitFor(async () => { expect((await ctx.jev.getStageNavigation(seeded.id, signal)).batch?.status).toBe('completed') }, { timeout: 3_000 })
+  const snapshot = await ctx.jev.getStageNavigation(seeded.id, signal)
+  const step = snapshot.turns[0]!.steps[0]!
+  expect(step.analysis.status).toBe('succeeded')
+  expect(step.tools[0]!.arguments).toBe(argumentsA)
+  const detail = await ctx.jev.getStageAnalysisRecord(seeded.id, step.id)
+  const saved = detail?.request?.state as { target: { tools: { arguments: string }[] } }
+  const sent = http.calls[0] as { state: typeof saved }
+  const expected = { command: 'API_KEY="[REDACTED]" npm run build',
+    nested: [{ value: '[REDACTED]', api_key: '[REDACTED]' }], cwd: '/workspace', flags: [true, 2, null] }
+  expect(JSON.parse(saved.target.tools[0]!.arguments)).toEqual(expected)
+  expect(JSON.parse(sent.state.target.tools[0]!.arguments)).toEqual(expected)
   expect(http.calls).toHaveLength(2)
   expect(http.errors).toEqual([])
 })
@@ -342,7 +403,8 @@ it('associates an in-flight stage with its old channel and prepares the followin
   updateVolatile(config.lunaApi, createVolatile('openai'))
   held.resolve()
   const signal = new AbortController().signal
-  await vi.waitFor(async () => { expect((await ctx.jev.getStageNavigation(seeded.id, signal)).batch?.status).toBe('completed') })
+  // A batch includes serial localhost judgments and durable writes under parallel-suite load.
+  await vi.waitFor(async () => { expect((await ctx.jev.getStageNavigation(seeded.id, signal)).batch?.status).toBe('completed') }, { timeout: 3_000 })
   const snapshot = await ctx.jev.getStageNavigation(seeded.id, signal)
   expect(snapshot.batch).toMatchObject({ completed: 1, failed: 1 })
   const first = await ctx.jev.getStageAnalysisRecord(seeded.id, snapshot.turns[0]!.steps[0]!.id)
