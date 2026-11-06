@@ -1,6 +1,16 @@
 packages:
   - packages/*
   - '!packages/typert-protocol-reference'
+# Narrow security overrides for the development dependency graph. Keep unrelated majors unchanged.
+# Direct runtime Zod is pinned in both package manifests; this also repairs old transitive pins.
+overrides:
+  'zod@>=4.0.0 <4.6.6': 4.6.6
+  'vite@>=7.0.0 <7.3.7': 7.3.7
+  'source-map-js@<1.2.2': 1.2.2
+  'fflate@>=0.8.0 <0.8.3': 0.8.3
+  'undici@>=8.0.0 <8.12.2': 8.12.2
+  'fast-uri@>=3.0.0 <3.1.9': 3.1.9
+  '@modelcontextprotocol/client@>=2.0.0 <2.3.0': 2.3.0
 allowBuilds:
   '@deepseek-ai/dsh-subprocess-local': true
   '@google/genai': false

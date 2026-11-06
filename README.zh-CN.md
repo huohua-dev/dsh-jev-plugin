@@ -1,6 +1,6 @@
 # deepseek-harness-jev
 
-> **审查分支，尚未合入本 fork 的 main：**此次上游合并在新 Host 上存在 MCP 筛选能力缺口，依赖漏洞也尚未解决。使用前请阅读 [2026-11-06 审查报告](docs/reviews/2026-11-06-upstream-review.md)。下文保留的历史上游安装地址不会安装本 fork 的审查分支。
+> **审查分支，尚未合入本 fork 的 main：**此次上游合并在新 Host 上存在 MCP 筛选能力缺口。[后续安全修复](docs/reviews/2026-11-06-security-followup.md)已修复依赖漏洞（当前复扫零命中），并记录另行保留旧宿主基线的决定。使用前请阅读 [2026-11-06 审查报告](docs/reviews/2026-11-06-upstream-review.md)。下文保留的历史上游安装地址不会安装本 fork 的审查分支。
 
 [English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 

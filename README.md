@@ -1,6 +1,6 @@
 # deepseek-harness-jev
 
-> **Review branch, not merged into the fork's main:** this upstream merge has a known MCP selection capability gap on the new Host and unresolved dependency advisories. Read the [2026-11-06 review](docs/reviews/2026-11-06-upstream-review.md) before using it. Historical upstream installation URLs below do not install this fork's review branch.
+> **Review branch, not merged into the fork's main:** this upstream merge has a known MCP selection capability gap on the new Host. The [security follow-up](docs/reviews/2026-11-06-security-followup.md) fixes the dependency advisories (zero current audit findings) and records the decision to retain the old Host baseline separately. Read the [2026-11-06 review](docs/reviews/2026-11-06-upstream-review.md) before using it. Historical upstream installation URLs below do not install this fork's review branch.
 
 English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
