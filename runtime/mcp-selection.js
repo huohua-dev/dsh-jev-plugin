@@ -55,13 +55,24 @@ function task(agent, pending) {
 function validAnswers(response, count) {
 	return response.answers.length === count && response.answers.every((answer, index) => answer.id === `tool-${index}` && answer.kind === "noul" && Number.isFinite(answer.probability) && answer.probability >= 0 && answer.probability <= 1);
 }
+/**
+* Hosts through 0.2.1-rc.5 publish tool declarations in the `system-prompt/assemble` waterfall. Since
+* 0.2.2-alpha.2 the Host attaches them after it, so the payload carries only sections, contexts and
+* variables; reading its `tools` there throws `Cannot read properties of undefined` on every model step.
+*/
+function hasAssemblyTools(assembly) {
+	return typeof assembly === "object" && assembly !== null && Array.isArray(assembly.tools);
+}
 function apply(ctx, config) {
+	const providerOwnedTools = typeof ctx.tools.resolve === "function";
 	ctx.effect(() => ctx.jev.registerFeature({
 		id: FEATURE,
 		name: "MCP tool selection",
-		description: "Select native MCP tool definitions for the current task without changing permissions"
+		description: "Select native MCP tool definitions for the current task without changing permissions",
+		...providerOwnedTools ? { settingsDescription: "Unavailable on this Host: tool declarations are owned by its tool executor, so definition-only selection has no public hook. Native tools and approvals remain unchanged." } : {}
 	}));
 	ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), "jev-mcp-selection.settings");
+	if (providerOwnedTools) return;
 	let states = /* @__PURE__ */ new WeakMap();
 	const claims = /* @__PURE__ */ new WeakMap();
 	const prepared = /* @__PURE__ */ new WeakMap();
@@ -380,6 +391,7 @@ function apply(ctx, config) {
 	} : assembly;
 	ctx.on("system-prompt/assemble", async (_assembly, context, next) => {
 		const original = await next();
+		if (!hasAssemblyTools(original)) return original;
 		const baseline = withoutHelpers(original);
 		const agent = context.agent;
 		if (!live(agent) || !context.signal) return baseline;

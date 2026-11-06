@@ -44,7 +44,8 @@ async function fixture(mode: ToolPresentationMode = 'native') {
     } }
   })
   const receipt = vi.fn(async () => {})
-  ctx.provide('jev', { registerFeature: () => () => {}, isFeatureEnabled: () => on,
+  const features: Array<{ id: string; name: string; description: string }> = []
+  ctx.provide('jev', { registerFeature: (feature: (typeof features)[number]) => { features.push(feature); return () => {} }, isFeatureEnabled: () => on,
     onFeatureStateChange: (value: () => void) => { listener = value; return () => { listener = undefined } },
     judgeOnce: judge, writeReceipt: receipt,
   } as never)
@@ -74,7 +75,7 @@ async function fixture(mode: ToolPresentationMode = 'native') {
     if (decision.kind === 'enter') for (const message of decision.messages) target.session.append('user/message', message, { surfaceOp: 'append' })
     return assembly
   }
-  return { ctx, harness, agent, config, scores, requests, judge, receipt, register, executed, removeA, assemble, invoke, step,
+  return { ctx, harness, agent, config, scores, requests, judge, receipt, features, register, executed, removeA, assemble, invoke, step,
     enabled: (value: boolean) => { on = value; listener?.() } }
 }
 const names = (assembly: { tools: { name: string }[] }) => assembly.tools.map(tool => tool.name)
@@ -253,5 +254,49 @@ describe('native MCP definition selection through public hooks', () => {
     expect(actual.sections).toEqual(baseline.sections)
     expect(actual.sections.find(section => section.name === 'tools:sdk')?.text).toContain(A)
     expect(f.judge).not.toHaveBeenCalled()
+  })
+  it('registers the feature as available on Hosts that publish tool declarations in the prompt waterfall', async () => {
+    const f = await fixture()
+    expect(f.features).toEqual([{ id: 'mcp-selection', name: 'MCP tool selection',
+      description: 'Select native MCP tool definitions for the current task without changing permissions' }])
+  })
+})
+
+// Host 0.2.2 attaches tool declarations after the `system-prompt/assemble` waterfall, so its payload has no `tools`.
+// Reading them there made every model step fail with "Cannot read properties of undefined (reading 'some')".
+describe('Hosts that do not publish tool declarations in the prompt waterfall', () => {
+  it('passes a text-only prompt waterfall through untouched instead of reading its missing tools', async () => {
+    const f = await fixture()
+    f.ctx.on('system-prompt/assemble', async (_assembly, _context, next) => {
+      const { tools: _tools, ...text } = await next()
+      return text as never
+    })
+    const first = await f.step([user('inspect beta')])
+    expect(first).not.toHaveProperty('tools')
+    expect(first.sections.length).toBeGreaterThan(0)
+    await expect(f.step()).resolves.not.toHaveProperty('tools')
+    // Without declarations there is nothing to rate: no paid request, receipt or session notice.
+    expect(f.judge).not.toHaveBeenCalled()
+    expect(f.receipt).not.toHaveBeenCalled()
+    expect(f.agent.session.deriveMessages().some(m => m.role === 'user' && m.source.kind === 'jev-mcp-selection')).toBe(false)
+  })
+
+  it('stays inactive, with no recovery tools or hooks, when the Host tool executor owns declarations', () => {
+    const ctx = new Context()
+    cleanups.push(async () => { await ctx.fiber.dispose() })
+    const features: Array<{ id: string; description: string; settingsDescription?: string }> = []
+    const registerTool = vi.fn(() => () => {})
+    ctx.provide('jev', { registerFeature: (feature: (typeof features)[number]) => { features.push(feature); return () => {} },
+      isFeatureEnabled: () => true, onFeatureStateChange: () => () => {} } as never)
+    // `resolve` is the step-activation API of Hosts whose executor owns tool declarations.
+    ctx.provide('tools', { resolve: async () => ({}), register: registerTool, get: () => undefined, schemas: () => [] } as never)
+    ctx.provide('settings', { configure: () => () => {} } as never)
+    const on = vi.fn()
+    ;(ctx as unknown as { on: unknown }).on = on
+    apply(ctx, Config({} as never))
+    // The Jev page renders `settingsDescription` under its localized text, so the reason reaches the user.
+    expect(features).toEqual([expect.objectContaining({ id: 'mcp-selection', settingsDescription: expect.stringMatching(/^Unavailable on this Host/) })])
+    expect(registerTool).not.toHaveBeenCalled()
+    expect(on).not.toHaveBeenCalled()
   })
 })

@@ -14,6 +14,8 @@ The [2026-10-09–10 Harness compatibility report](docs/testing/2026-10-09-harne
 
 The [2026-10-11 version compatibility report](docs/testing/2026-10-11-harness-version-compatibility/README.md) records five released DSH runtimes, official installation and local deterministic feature checks. The current [installation guide](README.md#install-through-the-web-ui-recommended) lists the declared range (`>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`) and the releases exercised by compatibility validation, through 0.2.1-rc.2; the exact development baseline is 0.2.1-rc.2.
 
+The [2026-11-06 DSH 0.2.2-rc.1 report](docs/testing/2026-11-06-harness-0.2.2-rc.1/README.md) records why every model step failed with `Cannot read properties of undefined (reading 'some')` on that Host, the fix, and what was and was not verified; MCP tool selection is inactive there.
+
 The [2026-10-07 Luna results](docs/testing/2026-10-07-luna-decisions/public-results.md) separate protocol/installation checks, controlled samples, and real main-model tasks. They retain the OpenRouter HTTP 403, two controlled approval misses, one later native approval success, log reduction, and ranking limits.
 
 [简体中文](README.zh-CN.md)

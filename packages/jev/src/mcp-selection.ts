@@ -75,10 +75,26 @@ function validAnswers(response: JevResponse, count: number): boolean {
       && answer.probability >= 0 && answer.probability <= 1)
 }
 
+/**
+ * Hosts through 0.2.1-rc.5 publish tool declarations in the `system-prompt/assemble` waterfall. Since
+ * 0.2.2-alpha.2 the Host attaches them after it, so the payload carries only sections, contexts and
+ * variables; reading its `tools` there throws `Cannot read properties of undefined` on every model step.
+ */
+function hasAssemblyTools(assembly: unknown): assembly is PromptAssembly {
+  return typeof assembly === 'object' && assembly !== null && Array.isArray((assembly as { tools?: unknown }).tools)
+}
+
 export function apply(ctx: Context, config: Config): void {
+  // A Host whose tool executor owns the declarations (the step-activation API, `tools.resolve`) offers no public
+  // hook that narrows definitions without also denying execution. Stay inactive there rather than rewrite
+  // provider output: no recovery tools and no hooks are registered, so native tools are untouched.
+  const providerOwnedTools = typeof (ctx.tools as { resolve?: unknown }).resolve === 'function'
+  // The Jev page shows `settingsDescription` under the localized feature text, so the reason stays visible.
   ctx.effect(() => ctx.jev.registerFeature({ id: FEATURE, name: 'MCP tool selection',
-    description: 'Select native MCP tool definitions for the current task without changing permissions' }))
+    description: 'Select native MCP tool definitions for the current task without changing permissions',
+    ...providerOwnedTools ? { settingsDescription: 'Unavailable on this Host: tool declarations are owned by its tool executor, so definition-only selection has no public hook. Native tools and approvals remain unchanged.' } : {} }))
   ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), 'jev-mcp-selection.settings')
+  if (providerOwnedTools) return
   let states = new WeakMap<Agent, State>()
   const claims = new WeakMap<Agent, { turn: number; messages: UserMessage[] }>()
   const prepared = new WeakMap<Agent, Prepared>()
@@ -269,6 +285,8 @@ export function apply(ctx: Context, config: Config): void {
 
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
     const original = await next()
+    // A payload without declarations (any Host not caught above) is never cast into an editable assembly.
+    if (!hasAssemblyTools(original)) return original
     const baseline = withoutHelpers(original)
     const agent = context.agent
     if (!live(agent) || !context.signal) return baseline

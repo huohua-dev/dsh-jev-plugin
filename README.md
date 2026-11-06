@@ -2,6 +2,8 @@
 
 > **Security fixes integrated into main:** this fork retains the existing DSH 0.2.1-rc.2 baseline and MCP selection, patches known dependency vulnerabilities, and backports stage-argument redaction and current-directory/PTC approval fixes. The newer Host upgrade remains deferred; the full upstream review is preserved by tag `archive/upstream-review-20261106`. See the [security report](docs/reviews/2026-11-06-preserve-mcp-security.md); installation URLs below refer to historical upstream releases, not this fork.
 
+> **DSH 0.2.2:** from 0.2.2-alpha.2 the Host's tool executor owns tool declarations and attaches them after the prompt waterfall, so **MCP tool selection stays inactive** there. Earlier builds of this plugin failed every model step on such Hosts with `Cannot read properties of undefined (reading 'some')`. The plugin now installs and runs on DSH 0.2.2-rc.1, the only 0.2.2 build exercised; see the [report](docs/testing/2026-11-06-harness-0.2.2-rc.1/README.md).
+
 English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 
 **Native DeepSeek Harness (DSH) plugin with Jev or Luna Decisions as its judgment model.**
@@ -75,7 +77,7 @@ Each classification covers one complete DSH model step: its recorded reasoning, 
 
 ## Install through the Web UI (recommended)
 
-Compatibility validation exercises DSH **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2, 0.2.1-alpha.3, 0.2.1-rc.1 and 0.2.1-rc.2**. The package declares the range `>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`, so later 0.2.x releases are accepted by the installer without a plugin update, while 0.3.0 and later stay outside the declaration until validated; unlisted 0.2.x releases are accepted but not individually exercised. 0.2.1-alpha.1 remains outside the declaration. Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
+Compatibility validation exercises DSH **0.1.7-rc.1, 0.1.7-rc.2, 0.2.0-rc.1, 0.2.0-rc.2, 0.2.1-alpha.2, 0.2.1-alpha.3, 0.2.1-rc.1 and 0.2.1-rc.2**. The package declares the range `>=0.1.7-rc.1 <=0.2.0-rc.2 || ^0.2.1-alpha.2`, so later 0.2.x releases are accepted by the installer without a plugin update, while 0.3.0 and later stay outside the declaration until validated; unlisted 0.2.x releases are accepted but not individually exercised. 0.2.1-alpha.1 remains outside the declaration. DSH 0.2.2-rc.1 was exercised separately and is not in the list above: it installs and runs, MCP tool selection is inactive there, and the Host's plugin-detail view requests two README images that the package does not ship ([report](docs/testing/2026-11-06-harness-0.2.2-rc.1/README.md)). Install directly from the GitHub repository URL. No source checkout, manual packaging, or npm login is required.
 
 1. Open **Plugins in the sidebar → Add plugin**.
 2. Paste the GitHub URL below into **Package name or address**, then click **Install**.
@@ -179,6 +181,7 @@ Long-log and test-log admission have independent switches, both off by default. 
 
 ## Behavior and limitations
 
+- **MCP tool selection needs a Host that publishes tool declarations in its prompt waterfall (DSH through 0.2.1-rc.5).** From DSH 0.2.2-alpha.2 the tool executor owns them: the feature is listed as unavailable, registers no recovery tools or hooks, and native tools and approvals are unchanged. The other features are unaffected there.
 - **Reminders are advisory.** Drift and instruction guidance do not block or cancel tools, and do not force the main model to comply. Evidence questions retain at least two choices even with one reference or no textual requirements; an uncertainty choice cannot supply a correction's supporting reference.
 - **Completion checks in a fixed 16-slot diagnosis.** With scripted initial errors, real Jev judgments and DeepSeek supplements met the core requirements in 6/6 enabled error cases; 2/2 accurate enabled controls were judged complete without a supplement. See the [new results](docs/testing/2026-10-05-completion-recovery/public-results.zh-CN.md). Those trials used the earlier recorded-evidence semantics and do not establish real-task results for lightweight report checks. This diagnosis does not establish a natural-task error rate or average coding benefit. In an earlier long coding trial, the default evidence budget cropped the original requirement, leading to zero adopted judgments and zero automatic supplements before manual Retry/Cancel; see the [historical report](docs/testing/2026-10-02-completion-skill/README.md).
 - **Approvals remain single-operation.** Workspace approval neither changes the session's sandbox mode nor overrides fixed host checks. `approve` can supply `allowed-once`; `unauthorized` or `unknown` returns to the original human approval flow. Technical failures retain manual Retry/Cancel.
