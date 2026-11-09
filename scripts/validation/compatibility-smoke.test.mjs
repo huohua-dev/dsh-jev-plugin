@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
+import { createRequire } from 'node:module'
 import { afterEach, expect, it } from 'vitest'
 
 const execute = promisify(execFile)
@@ -97,4 +98,38 @@ if (command === 'npm' && args[0] === 'install' && ['build', 'unpack'].includes(p
   expect(JSON.parse((await readFile(command.log, 'utf8')).trim())).toEqual(phase === 'build'
     ? { command: 'pnpm', args: ['run', 'build'] }
     : { command: 'npm', args: ['install', '--no-audit', '--no-fund'] })
+}, 30_000)
+
+it('prepares resolvable fixture dependencies without directory symlink privileges', async () => {
+  const version = manifest.devDependencies['@deepseek-ai/dsh']
+  const root = await mkdtemp(join(tmpdir(), 'jev-smoke-command-'))
+  temporaryRoots.push(root)
+  const modules = join(root, 'official runtime with spaces/node_modules/@deepseek-ai')
+  const cli = join(modules, 'dsh/lib/cli.mjs')
+  await mkdir(join(modules, 'dsh/lib'), { recursive: true })
+  await mkdir(join(modules, 'fixture-sentinel'))
+  await writeFile(join(modules, 'fixture-sentinel/package.json'), JSON.stringify({ main: 'index.cjs' }))
+  await writeFile(join(modules, 'fixture-sentinel/index.cjs'), 'module.exports = "fixture dependency resolved"')
+  await writeFile(cli, `
+if (process.argv.includes('--version')) console.log(${JSON.stringify(version)})
+else if (!process.argv.includes('--dump-default-config') && !process.argv.includes('plugin')) {
+  console.error('Intentional fixture Host stop after dependency preparation')
+  process.exitCode = 42
+}
+`)
+  const map = join(root, 'runtime-map.json')
+  await writeFile(map, JSON.stringify({ [version]: cli }))
+  const artifacts = join(root, 'matrix artifacts with spaces')
+  const execution = await execute(process.execPath, [join(project, 'scripts/validation/compatibility-matrix.mjs'),
+    '--runtime-map', map, '--version', version, '--artifacts', artifacts, '--final-package', join(root, 'unused.tgz')],
+    { cwd: project, timeout: 20_000 }).catch(error => error)
+  expect(execution.code).toBe(1)
+  const summary = JSON.parse(await readFile(join(artifacts, 'results.json'), 'utf8'))
+  const [item] = summary.versions
+  expect(item.install.code).toBe(0)
+  expect(item.failure.phase).toBe('host-fixture')
+  expect(item.host.finalExit.code).toBe(42)
+  expect(summary.realModelCalls).toBe(0)
+  const fixtureRequire = createRequire(join(item.caseRoot, 'home/profiles/compatibility/fixture/probe.cjs'))
+  expect(fixtureRequire('@deepseek-ai/fixture-sentinel')).toBe('fixture dependency resolved')
 }, 30_000)
