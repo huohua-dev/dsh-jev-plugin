@@ -2,7 +2,9 @@
 
 > **Security fixes integrated into main:** this fork retains the existing DSH 0.2.1-rc.2 baseline and MCP selection, patches known dependency vulnerabilities, and backports stage-argument redaction and current-directory/PTC approval fixes. The newer Host upgrade remains deferred; the full upstream review is preserved by tag `archive/upstream-review-20261106`. See the [security report](docs/reviews/2026-11-06-preserve-mcp-security.md); installation URLs below refer to historical upstream releases, not this fork.
 
-> **DSH 0.2.2:** from 0.2.2-alpha.2 the Host's tool executor owns tool declarations and attaches them after the prompt waterfall, so **MCP tool selection stays inactive** there. Earlier builds of this plugin failed every model step on such Hosts with `Cannot read properties of undefined (reading 'some')`. The plugin now installs and runs on DSH 0.2.2-rc.1, the only 0.2.2 build exercised; see the [report](docs/testing/2026-11-06-harness-0.2.2-rc.1/README.md).
+> **DSH 0.2.2:** from 0.2.2-alpha.2 the Host's tool executor owns tool declarations and attaches them after the prompt waterfall, so **MCP tool selection stays inactive** there. Earlier builds of this plugin failed every model step on such Hosts with `Cannot read properties of undefined (reading 'some')`. The plugin now installs and runs on DSH 0.2.2-rc.1, the first 0.2.2 build exercised; see the [report](docs/testing/2026-11-06-harness-0.2.2-rc.1/README.md).
+
+> **rc.2 compatibility fix:** this revision adapts the removed Agent registry `roots()` API to the public subagent tree query. Strict Host/Web checks pass on 0.2.2-rc.2 and retained 0.2.1-rc.2. README images now ship with the root package. MCP selection stays unavailable on 0.2.2. Updating the repository does not update an already installed user profile; [report](docs/testing/2026-11-12-harness-0.2.2-rc.2/README.md).
 
 English | [简体中文](README.zh-CN.md) | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 

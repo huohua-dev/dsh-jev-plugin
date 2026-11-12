@@ -1,4 +1,5 @@
 import { n as JevError } from "./types-Bf-UMMSE.js";
+import { r as liveRoots, t as isLiveRoot } from "./agent-roots-BuD7ZwFU.js";
 import s from "@deepseek-ai/schemastery";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
 //#region packages/jev/lib/types/completion-report.js
@@ -295,7 +296,7 @@ function apply(ctx, config) {
 	ctx.effect(() => ctx.systemPrompt.section({
 		name: "jev-completion-todo",
 		order: 650,
-		text: ({ agent }) => agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent) && ctx.goals.get(agent)?.phase !== "active" && !states.get(agent)?.ownsGoalTurn && ctx.jev.isFeatureEnabled("completion-check") ? "When updating an existing Todo, briefly include actual actions, artifact paths, or executed commands and observed results in its content. Keep failures, unfinished work, and unverified results truthful. Do not create a Todo for a simple task solely for this check; no extra fields, evidence report, or separate preparation round is required." : ""
+		text: ({ agent }) => isLiveRoot(ctx, agent) && ctx.goals.get(agent)?.phase !== "active" && !states.get(agent)?.ownsGoalTurn && ctx.jev.isFeatureEnabled("completion-check") ? "When updating an existing Todo, briefly include actual actions, artifact paths, or executed commands and observed results in its content. Keep failures, unfinished work, and unverified results truthful. Do not create a Todo for a simple task solely for this check; no extra fields, evidence report, or separate preparation round is required." : ""
 	}));
 	ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), "jev-supervision.settings");
 	const tasks = /* @__PURE__ */ new Set();
@@ -305,7 +306,7 @@ function apply(ctx, config) {
 		lifetime.abort();
 		await Promise.allSettled([...tasks]);
 	});
-	const live = (agent) => agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+	const live = (agent) => isLiveRoot(ctx, agent);
 	const enabled = (feature) => ctx.jev.isFeatureEnabled(feature);
 	const stateFor = (agent) => {
 		let state = states.get(agent);
@@ -509,7 +510,7 @@ function apply(ctx, config) {
 		});
 	}
 	ctx.effect(() => ctx.jev.onFeatureStateChange((features) => {
-		for (const agent of ctx.agents.roots()) {
+		for (const agent of liveRoots(ctx)) {
 			const state = states.get(agent);
 			if (state !== void 0 && state.enabled !== (features["drift-monitoring"] === true)) {
 				state.enabled = features["drift-monitoring"] === true;

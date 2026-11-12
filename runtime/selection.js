@@ -1,4 +1,5 @@
 import { n as JevError } from "./types-Bf-UMMSE.js";
+import { t as isLiveRoot } from "./agent-roots-BuD7ZwFU.js";
 import s from "@deepseek-ai/schemastery";
 import { createHash } from "node:crypto";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
@@ -23,7 +24,7 @@ function ratio(value, name) {
 	return value;
 }
 function liveRoot(ctx, agent) {
-	return agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+	return isLiveRoot(ctx, agent);
 }
 /** Use the native live directory when available; legacy providers receive the Session's original directory or their default. */
 async function skillDirectory(ctx, agent, signal) {

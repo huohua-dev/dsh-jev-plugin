@@ -1,3 +1,4 @@
+import { n as liveRootOf, t as isLiveRoot } from "./agent-roots-BuD7ZwFU.js";
 import s from "@deepseek-ai/schemastery";
 import { createHash } from "node:crypto";
 import { MessageId, createUserMessage } from "@deepseek-ai/dsh-llm";
@@ -157,14 +158,7 @@ function isShared(message) {
 	return message.source.kind === "agent-message" || message.source.kind === "subagent-settled";
 }
 function rootOf(ctx, agent) {
-	let current = agent;
-	const visited = /* @__PURE__ */ new Set();
-	while (current !== void 0 && !visited.has(current.id)) {
-		visited.add(current.id);
-		if (ctx.agents.roots().includes(current)) return current;
-		const parent = current.session.header.parentSession;
-		current = parent === void 0 ? void 0 : ctx.agents.get(parent);
-	}
+	return liveRootOf(ctx, agent);
 }
 function currentTask(root) {
 	const committed = root.session.deriveMessages().filter((message) => message.role === "user" && message.source.kind === "user");
@@ -268,7 +262,7 @@ async function apply(ctx, config) {
 	}));
 	ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), "jev-shared-findings.settings");
 	function isRootLive(root) {
-		return ctx.agents.get(root.id) === root && ctx.agents.roots().includes(root);
+		return isLiveRoot(ctx, root);
 	}
 	function enqueue(rootId, work) {
 		const next = (rootQueues.get(rootId) ?? Promise.resolve()).catch(() => {}).then(work);

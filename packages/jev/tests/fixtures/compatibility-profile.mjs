@@ -33,6 +33,17 @@ export function apply(ctx) {
   const scripts = new Map()
   const agents = new Map()
   const runningJudgments = new Set()
+  // The Agent registry lists roots through 0.2.2-rc.1; afterwards the subagent service owns tree membership.
+  const isRoot = agent => {
+    if (typeof ctx.agents.roots === 'function') return ctx.agents.roots().includes(agent)
+    try { return ctx.get('subagents').rootOf(agent) === agent } catch { return false }
+  }
+  // Hosts from 0.2.2-alpha.3 answer a delegation with the child's tree name; earlier ones with its Session id.
+  const childSessionId = async (rootId, token) => {
+    const subagents = ctx.get('subagents')
+    if (typeof subagents?.resolveName !== 'function') return token
+    return subagents.resolveName(agents.get(rootId), token, AbortSignal.timeout(5000))
+  }
   ctx.on('llm/stream', (options, next) => {
     if (!['jev-compatibility-fixture', 'jev-system-one'].includes(options.provider)) throw new Error('The compatibility fixture refuses all external model routes')
     return next()
@@ -57,7 +68,7 @@ export function apply(ctx) {
     async *stream(request) {
       const id = request.sessionId ?? request.agent?.session.id
       let script = scripts.get(id)
-      if (!script && ctx.agents.get(id) && !ctx.agents.roots().includes(ctx.agents.get(id))) {
+      if (!script && ctx.agents.get(id) && !isRoot(ctx.agents.get(id))) {
         script = { actions: [{}], child: true }
         scripts.set(id, script)
       }
@@ -67,8 +78,8 @@ export function apply(ctx) {
       if (script.sharedReports) {
         for (const message of request.messages.filter(message => message.role === 'tool' && script.delegationCallIds.has(message.source.callId))) {
           const text = message.content.filter(block => block.type === 'text').map(block => block.text).join('')
-          const childId = /^started subagent ([^\s]+)$/.exec(text)?.[1]
-          if (childId) script.delegatedChildIds.add(childId)
+          const token = /^started subagent ([^\s]+)$/.exec(text)?.[1]
+          if (token) script.delegatedChildIds.add(await childSessionId(id, token))
         }
         assert(script.delegatedChildIds.size <= 2, 'Shared-report fixture may delegate at most two children')
         for (const message of request.messages.filter(message => message.source.kind === 'subagent-settled')) {

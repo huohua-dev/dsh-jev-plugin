@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import s from '@deepseek-ai/schemastery';
 import { createUserMessage } from '@deepseek-ai/dsh-llm';
+import { isLiveRoot, liveRoots } from "./agent-roots.js";
 import { JevError } from "./index.js";
 export const Config = s.object({
     contextChars: s.number().step(1).min(1).max(1_000_000).default(12_000),
@@ -18,7 +19,7 @@ export function apply(ctx, config) {
     const lifetime = new AbortController();
     const background = new Set();
     let stopping = false;
-    const live = (agent) => ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+    const live = (agent) => isLiveRoot(ctx, agent);
     const pending = (state, id) => [...state.agent.inbox.nextStep, ...state.agent.inbox.nextTurn].find(message => message.id === id);
     function mutate(state, callback) { state.internal++; try {
         return callback();
@@ -250,13 +251,13 @@ export function apply(ctx, config) {
         for (const entry of state.entries.values())
             entry.controller.abort(); states.delete(agent); });
     ctx.effect(() => ctx.jev.onFeatureStateChange(features => {
-        for (const agent of ctx.agents.roots()) {
+        for (const agent of liveRoots(ctx)) {
             const state = initialize(agent);
             if (state.enabled !== (features[FEATURE] === true) || state.markerFailed)
                 mode(state, features[FEATURE] === true, agent.status === 'running');
         }
     }));
-    for (const agent of ctx.agents.roots())
+    for (const agent of liveRoots(ctx))
         initialize(agent);
     ctx.on('agent/inbox/inserted', ({ agent, message }) => {
         if (!live(agent) || message.source.kind !== 'user')

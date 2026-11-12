@@ -44,16 +44,16 @@ declare const relationSchema: z.ZodObject<{
     newerId: z.ZodString;
     state: z.ZodEnum<{
         pending: "pending";
-        interrupted: "interrupted";
         resolved: "resolved";
         unresolved: "unresolved";
+        interrupted: "interrupted";
     }>;
     kind: z.ZodOptional<z.ZodEnum<{
-        unknown: "unknown";
-        conflict: "conflict";
         replacement: "replacement";
+        conflict: "conflict";
         support: "support";
         unrelated: "unrelated";
+        unknown: "unknown";
     }>>;
     basis: z.ZodOptional<z.ZodString>;
     operationId: z.ZodOptional<z.ZodString>;
@@ -117,7 +117,7 @@ export declare function sharedFindingsSpec(profileDir: string): {
             rootId: string;
             olderId: string;
             newerId: string;
-            state: "pending" | "interrupted" | "resolved" | "unresolved";
+            state: "pending" | "resolved" | "unresolved" | "interrupted";
             deliveries: {
                 recipientId: string;
                 state: "unconfirmed" | "queued" | "model-received" | "not-delivered";
@@ -126,7 +126,7 @@ export declare function sharedFindingsSpec(profileDir: string): {
                 reason?: string | undefined;
             }[];
             at: string;
-            kind?: "unknown" | "conflict" | "replacement" | "support" | "unrelated" | undefined;
+            kind?: "replacement" | "conflict" | "support" | "unrelated" | "unknown" | undefined;
             basis?: string | undefined;
             operationId?: string | undefined;
         }>;

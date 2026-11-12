@@ -7,6 +7,7 @@ import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
 import { createUserMessage, MessageId, type UserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { foldSubagentDescriptor } from '@deepseek-ai/dsh-subagent'
+import { isLiveRoot, liveRootOf } from './agent-roots.ts'
 import type {} from './index.ts'
 import type { JevRequest, JevResponse } from './types.ts'
 import { findingId, SharedFindingsStore, type SharedFinding, type SharedRelation, type SharedDelivery } from './shared-findings-store.ts'
@@ -32,15 +33,7 @@ function isShared(message: UserMessage): boolean {
   return message.source.kind === 'agent-message' || message.source.kind === 'subagent-settled'
 }
 function rootOf(ctx: Context, agent: Agent): Agent | undefined {
-  let current: Agent | undefined = agent
-  const visited = new Set<string>()
-  while (current !== undefined && !visited.has(current.id)) {
-    visited.add(current.id)
-    if (ctx.agents.roots().includes(current)) return current
-    const parent: SessionId | undefined = current.session.header.parentSession
-    current = parent === undefined ? undefined : ctx.agents.get(parent)
-  }
-  return undefined
+  return liveRootOf(ctx, agent)
 }
 function currentTask(root: Agent): string {
   const committed = root.session.deriveMessages().filter(message => message.role === 'user' && message.source.kind === 'user')
@@ -104,7 +97,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
 
   ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), 'jev-shared-findings.settings')
 
-  function isRootLive(root: Agent): boolean { return ctx.agents.get(root.id) === root && ctx.agents.roots().includes(root) }
+  function isRootLive(root: Agent): boolean { return isLiveRoot(ctx, root) }
   function enqueue(rootId: string, work: () => Promise<void>): Promise<void> {
     const previous = rootQueues.get(rootId) ?? Promise.resolve()
     const next = previous.catch(() => {}).then(work)

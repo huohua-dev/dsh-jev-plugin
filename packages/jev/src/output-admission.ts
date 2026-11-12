@@ -5,6 +5,7 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import { trySaveFormattedResult } from '@deepseek-ai/dsh-tool-fs-search'
 import type { PostToolDecision, ToolExecution, ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-settings'
+import { isLiveRoot } from './agent-roots.ts'
 import type { JevRequest, JevResponse } from './types.ts'
 import type { OutputAdmissionConfigValues } from './output-admission-types.ts'
 import { codePoints, generalCandidates, groupCandidates, replaceSpans, testCandidates, testRunner, type LogSpan } from './output-admission-rules.ts'
@@ -57,7 +58,7 @@ function textOf(agent: Agent): Task {
 }
 
 function liveRoot(ctx: Context, agent: Agent | undefined): agent is Agent {
-  return agent !== undefined && agent.status === 'running' && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
+  return agent !== undefined && agent.status === 'running' && isLiveRoot(ctx, agent)
 }
 
 function commandIntent(exec: ToolExecution, result: ToolExecutionResult): string {

@@ -10,6 +10,7 @@ import { defineTool, type ToolExecution, type ToolExecutionResult } from '@deeps
 import type {} from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-tool-skill'
 import type {} from '@deepseek-ai/dsh-working-directory'
+import { isLiveRoot } from './agent-roots.ts'
 import { JevError } from './index.ts'
 import type { SelectionConfigValues } from './selection-types.ts'
 import type { JevRequest, JevResponse } from './types.ts'
@@ -62,7 +63,7 @@ function ratio(value: number, name: string): number {
 }
 
 function liveRoot(ctx: Context, agent: Agent | undefined): agent is Agent {
-  return agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
+  return isLiveRoot(ctx, agent)
 }
 
 /** Use the native live directory when available; legacy providers receive the Session's original directory or their default. */

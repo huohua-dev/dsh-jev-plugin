@@ -1,3 +1,4 @@
+import { t as isLiveRoot } from "./agent-roots-BuD7ZwFU.js";
 import s from "@deepseek-ai/schemastery";
 import { createHash } from "node:crypto";
 import { createUserMessage } from "@deepseek-ai/dsh-llm";
@@ -97,7 +98,7 @@ function apply(ctx, config) {
 		directoryGeneration++;
 	});
 	const enabled = () => !lifetime.signal.aborted && ctx.jev.isFeatureEnabled(FEATURE);
-	const live = (agent) => agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+	const live = (agent) => isLiveRoot(ctx, agent);
 	const settings = () => ({
 		toolLimit: config.toolLimit.get(),
 		minProbability: config.minProbability.get(),

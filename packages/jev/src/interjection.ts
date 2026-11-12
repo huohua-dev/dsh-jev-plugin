@@ -5,6 +5,7 @@ import s from '@deepseek-ai/schemastery'
 import type { Agent, InboxTarget } from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-goal'
 import { createUserMessage, type UserMessage } from '@deepseek-ai/dsh-llm'
+import { isLiveRoot, liveRoots } from './agent-roots.ts'
 import type { JevRequest, Json } from './types.ts'
 import { JevError, type JevJudgeResult } from './index.ts'
 
@@ -64,7 +65,7 @@ export function apply(ctx: Context, config: Config): void {
   const lifetime = new AbortController()
   const background = new Set<Promise<void>>()
   let stopping = false
-  const live = (agent: Agent) => ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
+  const live = (agent: Agent) => isLiveRoot(ctx, agent)
   const pending = (state: State, id: UserMessage['id']) => [...state.agent.inbox.nextStep, ...state.agent.inbox.nextTurn].find(message => message.id === id)
   function mutate<T>(state: State, callback: () => T): T { state.internal++; try { return callback() } finally { state.internal-- } }
   function track(task: Promise<void>): void { background.add(task); void task.finally(() => background.delete(task)).catch(() => {}) }
@@ -261,12 +262,12 @@ export function apply(ctx: Context, config: Config): void {
   })
   ctx.on('agent/disposed', ({ agent }) => { const state = states.get(agent); if (state !== undefined) for (const entry of state.entries.values()) entry.controller.abort(); states.delete(agent) })
   ctx.effect(() => ctx.jev.onFeatureStateChange(features => {
-    for (const agent of ctx.agents.roots()) {
+    for (const agent of liveRoots(ctx)) {
       const state = initialize(agent)
       if (state.enabled !== (features[FEATURE] === true) || state.markerFailed) mode(state, features[FEATURE] === true, agent.status === 'running')
     }
   }))
-  for (const agent of ctx.agents.roots()) initialize(agent)
+  for (const agent of liveRoots(ctx)) initialize(agent)
 
   ctx.on('agent/inbox/inserted', ({ agent, message }) => {
     if (!live(agent) || message.source.kind !== 'user') return

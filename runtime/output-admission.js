@@ -1,3 +1,4 @@
+import { t as isLiveRoot } from "./agent-roots-BuD7ZwFU.js";
 import s from "@deepseek-ai/schemastery";
 import { trySaveFormattedResult } from "@deepseek-ai/dsh-tool-fs-search";
 //#region packages/jev/lib/types/output-admission-rules.js
@@ -320,7 +321,7 @@ function textOf(agent) {
 	};
 }
 function liveRoot(ctx, agent) {
-	return agent !== void 0 && agent.status === "running" && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+	return agent !== void 0 && agent.status === "running" && isLiveRoot(ctx, agent);
 }
 function commandIntent(exec, result) {
 	const args = object(exec.arguments);

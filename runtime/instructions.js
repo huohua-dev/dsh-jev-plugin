@@ -1,4 +1,5 @@
 import { n as JevError } from "./types-Bf-UMMSE.js";
+import { r as liveRoots, t as isLiveRoot } from "./agent-roots-BuD7ZwFU.js";
 import "@deepseek-ai/cordis";
 import s from "@deepseek-ai/schemastery";
 import { createHash } from "node:crypto";
@@ -18,7 +19,7 @@ const FEATURE = "instruction-guidance";
 const hash = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const textOf = (message) => message.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
 function root(ctx, agent) {
-	return agent !== void 0 && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+	return isLiveRoot(ctx, agent);
 }
 function operation(ctx, exec, limit) {
 	const directory = ctx.get("workingDirectory");
@@ -332,7 +333,7 @@ function apply(ctx, config) {
 	});
 	ctx.on("session/event", (session, event) => {
 		if (event.type === "turn/end") {
-			for (const agent of ctx.agents.roots()) if (agent.session === session) discard(agent);
+			for (const agent of liveRoots(ctx)) if (agent.session === session) discard(agent);
 		}
 	});
 	const executionSignals = /* @__PURE__ */ new Map();

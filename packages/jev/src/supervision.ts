@@ -7,6 +7,7 @@ import { createUserMessage, type UserMessage } from '@deepseek-ai/dsh-llm'
 import type {} from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-system-prompt'
+import { isLiveRoot, liveRoots } from './agent-roots.ts'
 import { completionReport, completionVerdict, completionPreflight } from './completion-report.ts'
 import type { JevJudgeOptions, JevJudgeResult } from './index.ts'
 import type { JevRequest, JevResponse, Json } from './types.ts'
@@ -152,7 +153,7 @@ export function apply(ctx: Context, config: Config): void {
   ]) ctx.effect(() => ctx.jev.registerFeature(feature))
   ctx.effect(() => ctx.systemPrompt.section({
     name: 'jev-completion-todo', order: 650,
-    text: ({ agent }) => agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
+    text: ({ agent }) => isLiveRoot(ctx, agent)
       && ctx.goals.get(agent)?.phase !== 'active' && !states.get(agent)?.ownsGoalTurn && ctx.jev.isFeatureEnabled('completion-check')
       ? 'When updating an existing Todo, briefly include actual actions, artifact paths, or executed commands and observed results in its content. Keep failures, unfinished work, and unverified results truthful. Do not create a Todo for a simple task solely for this check; no extra fields, evidence report, or separate preparation round is required.' : '',
   }))
@@ -162,7 +163,7 @@ export function apply(ctx: Context, config: Config): void {
   const lifetime = new AbortController()
   ctx.effect(() => async () => { lifetime.abort(); await Promise.allSettled([...tasks]) })
 
-  const live = (agent: Agent | undefined): agent is Agent => agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
+  const live = (agent: Agent | undefined): agent is Agent => isLiveRoot(ctx, agent)
   const enabled = (feature: Check) => ctx.jev.isFeatureEnabled(feature)
   const stateFor = (agent: Agent): State => {
     let state = states.get(agent)
@@ -294,7 +295,7 @@ export function apply(ctx: Context, config: Config): void {
   }
 
   ctx.effect(() => ctx.jev.onFeatureStateChange(features => {
-    for (const agent of ctx.agents.roots()) {
+    for (const agent of liveRoots(ctx)) {
       const state = states.get(agent)
       if (state !== undefined && state.enabled !== (features['drift-monitoring'] === true)) {
         state.enabled = features['drift-monitoring'] === true

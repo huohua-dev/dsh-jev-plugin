@@ -1,5 +1,6 @@
 import s from '@deepseek-ai/schemastery';
 import { createUserMessage } from '@deepseek-ai/dsh-llm';
+import { isLiveRoot, liveRoots } from "./agent-roots.js";
 import { completionReport, completionVerdict, completionPreflight } from "./completion-report.js";
 export const Config = s.object({
     maxSupplementRounds: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(3).volatile(),
@@ -117,7 +118,7 @@ export function apply(ctx, config) {
         ctx.effect(() => ctx.jev.registerFeature(feature));
     ctx.effect(() => ctx.systemPrompt.section({
         name: 'jev-completion-todo', order: 650,
-        text: ({ agent }) => agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
+        text: ({ agent }) => isLiveRoot(ctx, agent)
             && ctx.goals.get(agent)?.phase !== 'active' && !states.get(agent)?.ownsGoalTurn && ctx.jev.isFeatureEnabled('completion-check')
             ? 'When updating an existing Todo, briefly include actual actions, artifact paths, or executed commands and observed results in its content. Keep failures, unfinished work, and unverified results truthful. Do not create a Todo for a simple task solely for this check; no extra fields, evidence report, or separate preparation round is required.' : '',
     }));
@@ -126,7 +127,7 @@ export function apply(ctx, config) {
     const assessments = new Map();
     const lifetime = new AbortController();
     ctx.effect(() => async () => { lifetime.abort(); await Promise.allSettled([...tasks]); });
-    const live = (agent) => agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+    const live = (agent) => isLiveRoot(ctx, agent);
     const enabled = (feature) => ctx.jev.isFeatureEnabled(feature);
     const stateFor = (agent) => {
         let state = states.get(agent);
@@ -270,7 +271,7 @@ export function apply(ctx, config) {
         });
     }
     ctx.effect(() => ctx.jev.onFeatureStateChange(features => {
-        for (const agent of ctx.agents.roots()) {
+        for (const agent of liveRoots(ctx)) {
             const state = states.get(agent);
             if (state !== undefined && state.enabled !== (features['drift-monitoring'] === true)) {
                 state.enabled = features['drift-monitoring'] === true;

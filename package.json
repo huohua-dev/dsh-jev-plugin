@@ -224,6 +224,8 @@
     "runtime/**/*.js",
     "runtime/**/*.d.ts",
     "packages/jev/cordis.patch.yml",
+    "docs/images/install-from-github.jpg",
+    "docs/images/jev-feature-toggles.png",
     "README.md",
     "README.en.md",
     "README.zh-CN.md",

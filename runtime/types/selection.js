@@ -5,6 +5,7 @@ import { createUserMessage } from '@deepseek-ai/dsh-llm';
 import { isModelInvocable, escapeText } from '@deepseek-ai/dsh-skill';
 import { trySaveFormattedResult } from '@deepseek-ai/dsh-tool-fs-search';
 import { defineTool } from '@deepseek-ai/dsh-tools';
+import { isLiveRoot } from "./agent-roots.js";
 import { JevError } from "./index.js";
 export const Config = s.object({
     skillLimit: s.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER).default(5).volatile(),
@@ -25,7 +26,7 @@ function ratio(value, name) {
     return value;
 }
 function liveRoot(ctx, agent) {
-    return agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+    return isLiveRoot(ctx, agent);
 }
 /** Use the native live directory when available; legacy providers receive the Session's original directory or their default. */
 async function skillDirectory(ctx, agent, signal) {

@@ -7,6 +7,7 @@ import { createUserMessage, type Message, type ToolSchema, type UserMessage } fr
 import type { PromptAssembly } from '@deepseek-ai/dsh-system-prompt'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-settings'
+import { isLiveRoot } from './agent-roots.ts'
 import type { JevJudgeOnceResult } from './index.ts'
 import { MCP_SELECTION_DEFAULTS as defaults, MCP_PUBLIC_NAME_PATTERN, isMcpPublicName, type McpSelectionConfigValues } from './mcp-selection-types.ts'
 export { isMcpPublicName } from './mcp-selection-types.ts'
@@ -113,8 +114,7 @@ export function apply(ctx: Context, config: Config): void {
   }))
   ctx.on('tools/change', () => { directoryGeneration++ })
   const enabled = () => !lifetime.signal.aborted && ctx.jev.isFeatureEnabled(FEATURE)
-  const live = (agent: Agent | undefined): agent is Agent => agent !== undefined
-    && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
+  const live = (agent: Agent | undefined): agent is Agent => isLiveRoot(ctx, agent)
   const settings = (): McpSelectionConfigValues => ({
     toolLimit: config.toolLimit.get(), minProbability: config.minProbability.get(), allowZero: config.allowZero.get(),
     pinnedTools: [...config.pinnedTools.get()], waitMs: config.waitMs.get(), maxRequestChars: config.maxRequestChars.get(),

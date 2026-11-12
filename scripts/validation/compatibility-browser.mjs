@@ -37,7 +37,8 @@ export async function checkCompatibilityBrowser({ url, endpoint, model, timeoutM
       failBrowser(error)
     }
     onPageError = error => fail('pageErrors', error.message)
-    onConsole = message => { if (message.type() === 'error') fail('consoleErrors', message.text()) }
+    // A failed network load logs a bare "Failed to load resource" line; the location names the resource.
+    onConsole = message => { if (message.type() === 'error') fail('consoleErrors', message.text() + (message.location()?.url ? ' (' + message.location().url + ')' : '')) }
     onRequestFailed = request => {
       if (request.resourceType() === 'script') fail('importErrors', request.url() + ': ' + request.failure()?.errorText)
     }

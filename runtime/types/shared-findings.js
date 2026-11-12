@@ -4,6 +4,7 @@ import s from '@deepseek-ai/schemastery';
 import { createUserMessage, MessageId } from '@deepseek-ai/dsh-llm';
 import { SessionId } from '@deepseek-ai/dsh-session';
 import { foldSubagentDescriptor } from '@deepseek-ai/dsh-subagent';
+import { isLiveRoot, liveRootOf } from "./agent-roots.js";
 import { findingId, SharedFindingsStore } from "./shared-findings-store.js";
 export const name = 'jev-shared-findings';
 export const inject = ['jev', 'agents', 'subagents', 'storageDomain', 'profileContext', 'settings'];
@@ -18,16 +19,7 @@ function isShared(message) {
     return message.source.kind === 'agent-message' || message.source.kind === 'subagent-settled';
 }
 function rootOf(ctx, agent) {
-    let current = agent;
-    const visited = new Set();
-    while (current !== undefined && !visited.has(current.id)) {
-        visited.add(current.id);
-        if (ctx.agents.roots().includes(current))
-            return current;
-        const parent = current.session.header.parentSession;
-        current = parent === undefined ? undefined : ctx.agents.get(parent);
-    }
-    return undefined;
+    return liveRootOf(ctx, agent);
 }
 function currentTask(root) {
     const committed = root.session.deriveMessages().filter(message => message.role === 'user' && message.source.kind === 'user');
@@ -89,7 +81,7 @@ export async function apply(ctx, config) {
     ctx.effect(() => ctx.jev.registerFeature({ id: FEATURE, name: 'Shared finding corrections',
         description: 'Compare already shared reports and messages; correct actual recipients and ask the root to verify unresolved conflicts.' }));
     ctx.effect(() => ctx.settings.configure({ auto: false }, ctx.fiber), 'jev-shared-findings.settings');
-    function isRootLive(root) { return ctx.agents.get(root.id) === root && ctx.agents.roots().includes(root); }
+    function isRootLive(root) { return isLiveRoot(ctx, root); }
     function enqueue(rootId, work) {
         const previous = rootQueues.get(rootId) ?? Promise.resolve();
         const next = previous.catch(() => { }).then(work);

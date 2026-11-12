@@ -1,6 +1,6 @@
 /** Every published subpath must resolve to a file the shipped bundle actually contains. */
 
-import { access } from 'node:fs/promises'
+import { access, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { expect, it } from 'vitest'
 import rootManifest from '../../../package.json' with { type: 'json' }
@@ -29,6 +29,18 @@ function entriesOf(manifest: Manifest): [string, string][] {
 // ./typert and ./remote are emitted by scripts/generate-typert.mjs, which 0.2.1-rc.1 currently
 // blocks; their shipped counterparts under runtime/ are covered by the root case above.
 const GENERATED = new Set(['./typert', './remote'])
+
+it('ships every local README image used by the Host plugin detail view', async () => {
+  for (const document of ['README.md', 'README.zh-CN.md']) {
+    const markdown = await readFile(document, 'utf8')
+    const images = [...markdown.matchAll(/!\[[^\]]*\]\((docs\/images\/[^)]+)\)/g)].map(match => match[1]!)
+    expect(images.length).toBeGreaterThan(0)
+    for (const image of images) {
+      expect(rootManifest.files).toContain(image)
+      expect(await exists(resolve(image))).toBe(true)
+    }
+  }
+})
 
 it.each([
   ['root', rootManifest as Manifest, '', new Set<string>()],

@@ -2,7 +2,9 @@
 
 > **安全修复已合入 main：**本 fork 保留 DSH 0.2.1-rc.2 基线和原有 MCP 筛选，修复已知依赖漏洞，回移阶段参数脱敏、当前目录与 PTC 审批修复；暂缓新版宿主升级。全量上游审查由标签 `archive/upstream-review-20261106` 保留。详见[安全报告](docs/reviews/2026-11-06-preserve-mcp-security.md)。下方安装地址指向历史上游版本，不是本 fork。
 
-> **DSH 0.2.2：**自 0.2.2-alpha.2 起，工具声明改由宿主执行器持有并在提示 waterfall 之后附加，**MCP 筛选在这类宿主上保持不可用**。本插件更早的构建在这类宿主上每个模型步骤都会以 `Cannot read properties of undefined (reading 'some')` 失败。现在插件可在 DSH 0.2.2-rc.1（唯一实际运行过的 0.2.2 构建）上安装并运行，详见[报告](docs/testing/2026-11-06-harness-0.2.2-rc.1/README.md)。
+> **DSH 0.2.2：**自 0.2.2-alpha.2 起，工具声明改由宿主执行器持有并在提示 waterfall 之后附加，**MCP 筛选在这类宿主上保持不可用**。本插件更早的构建在这类宿主上每个模型步骤都会以 `Cannot read properties of undefined (reading 'some')` 失败。现在插件可在 DSH 0.2.2-rc.1（首次实际验证的 0.2.2 构建）上安装并运行，详见[报告](docs/testing/2026-11-06-harness-0.2.2-rc.1/README.md)。
+
+> **rc.2 兼容修复：**本修订将已移除的 Agent registry `roots()` 适配到公开 subagent 树查询，已通过 0.2.2-rc.2 与保留的 0.2.1-rc.2 严格 Host/Web 检查。根安装包现附带 README 图片；0.2.2 上 MCP 筛选仍不可用。仓库更新不会自动更新用户 profile 中已安装的插件，见[报告](docs/testing/2026-11-12-harness-0.2.2-rc.2/README.md)。
 
 [English](README.md) | 简体中文 | [中文功能与实测网站](https://luobosibing2.github.io/dsh-jev-plugin/)
 

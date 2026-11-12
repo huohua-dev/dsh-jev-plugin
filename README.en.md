@@ -19,3 +19,5 @@ The [2026-11-06 DSH 0.2.2-rc.1 report](docs/testing/2026-11-06-harness-0.2.2-rc.
 The [2026-10-07 Luna results](docs/testing/2026-10-07-luna-decisions/public-results.md) separate protocol/installation checks, controlled samples, and real main-model tasks. They retain the OpenRouter HTTP 403, two controlled approval misses, one later native approval success, log reduction, and ranking limits.
 
 [简体中文](README.zh-CN.md)
+
+This revision fixes DSH 0.2.2-rc.2 activation via public runtime-root queries, ships the README images, and passes strict Host/Web checks on rc.2 and retained 0.2.1-rc.2. MCP selection remains unavailable on 0.2.2. See the [rc.2 report](docs/testing/2026-11-12-harness-0.2.2-rc.2/README.md); this is not deployed to the user profile.

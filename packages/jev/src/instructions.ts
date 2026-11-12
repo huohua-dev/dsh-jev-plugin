@@ -12,6 +12,7 @@ import type { FileSystem, FsTarget } from '@deepseek-ai/dsh-fs'
 import { createUserMessage, type UserMessage } from '@deepseek-ai/dsh-llm'
 import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import s from '@deepseek-ai/schemastery'
+import { isLiveRoot, liveRoots } from './agent-roots.ts'
 import type { JevRequest } from './types.ts'
 import { JevError } from './index.ts'
 
@@ -39,7 +40,7 @@ declare module '@deepseek-ai/dsh-llm' {
 }
 
 function root(ctx: Context, agent: Agent | undefined): agent is Agent {
-  return agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent)
+  return isLiveRoot(ctx, agent)
 }
 
 function operation(ctx: Context, exec: ToolExecution, limit: number): { name: string; arguments: string; omitted: boolean; cwd: string; targets: string[] } {
@@ -275,7 +276,7 @@ export function apply(ctx: Context, config: Config): void {
   }
   ctx.on('agent/status', ({ agent, status }) => { if (status === 'idle') discard(agent) })
   ctx.on('session/event', (session, event) => {
-    if (event.type === 'turn/end') for (const agent of ctx.agents.roots()) if (agent.session === session) discard(agent)
+    if (event.type === 'turn/end') for (const agent of liveRoots(ctx)) if (agent.session === session) discard(agent)
   })
   const executionSignals = new Map<ToolExecution['token'], AbortSignal>()
   ctx.on('tools/result', exec => { executionSignals.delete(exec.token) })

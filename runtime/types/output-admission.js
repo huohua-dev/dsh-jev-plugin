@@ -1,5 +1,6 @@
 import s from '@deepseek-ai/schemastery';
 import { trySaveFormattedResult } from '@deepseek-ai/dsh-tool-fs-search';
+import { isLiveRoot } from "./agent-roots.js";
 import { codePoints, generalCandidates, groupCandidates, replaceSpans, testCandidates, testRunner } from "./output-admission-rules.js";
 import { retainedEvidenceFor } from "./output-admission-evidence.js";
 export const Config = s.object({
@@ -39,7 +40,7 @@ function textOf(agent) {
     };
 }
 function liveRoot(ctx, agent) {
-    return agent !== undefined && agent.status === 'running' && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+    return agent !== undefined && agent.status === 'running' && isLiveRoot(ctx, agent);
 }
 function commandIntent(exec, result) {
     const args = object(exec.arguments);

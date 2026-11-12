@@ -7,6 +7,7 @@ import * as hostInstructions from '@deepseek-ai/dsh-agent-instructions';
 import { Config as InstructionConfig, loadBaselineInstructions } from '@deepseek-ai/dsh-agent-instructions';
 import { createUserMessage } from '@deepseek-ai/dsh-llm';
 import s from '@deepseek-ai/schemastery';
+import { isLiveRoot, liveRoots } from "./agent-roots.js";
 import { JevError } from "./index.js";
 export const Config = s.object({
     maxEvidenceChars: s.number().step(1).min(1000).max(100000).default(24000),
@@ -17,7 +18,7 @@ const FEATURE = 'instruction-guidance';
 const hash = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const textOf = (message) => message.content.filter(block => block.type === 'text').map(block => block.text).join('\n');
 function root(ctx, agent) {
-    return agent !== undefined && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+    return isLiveRoot(ctx, agent);
 }
 function operation(ctx, exec, limit) {
     const directory = ctx.get('workingDirectory');
@@ -305,7 +306,7 @@ export function apply(ctx, config) {
         discard(agent); });
     ctx.on('session/event', (session, event) => {
         if (event.type === 'turn/end')
-            for (const agent of ctx.agents.roots())
+            for (const agent of liveRoots(ctx))
                 if (agent.session === session)
                     discard(agent);
     });

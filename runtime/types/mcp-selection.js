@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import s from '@deepseek-ai/schemastery';
 import { createUserMessage } from '@deepseek-ai/dsh-llm';
 import { defineTool } from '@deepseek-ai/dsh-tools';
+import { isLiveRoot } from "./agent-roots.js";
 import { MCP_SELECTION_DEFAULTS as defaults, MCP_PUBLIC_NAME_PATTERN, isMcpPublicName } from "./mcp-selection-types.js";
 export { isMcpPublicName } from "./mcp-selection-types.js";
 export const Config = s.object({
@@ -75,8 +76,7 @@ export function apply(ctx, config) {
     }));
     ctx.on('tools/change', () => { directoryGeneration++; });
     const enabled = () => !lifetime.signal.aborted && ctx.jev.isFeatureEnabled(FEATURE);
-    const live = (agent) => agent !== undefined
-        && ctx.agents.get(agent.id) === agent && ctx.agents.roots().includes(agent);
+    const live = (agent) => isLiveRoot(ctx, agent);
     const settings = () => ({
         toolLimit: config.toolLimit.get(), minProbability: config.minProbability.get(), allowZero: config.allowZero.get(),
         pinnedTools: [...config.pinnedTools.get()], waitMs: config.waitMs.get(), maxRequestChars: config.maxRequestChars.get(),
