@@ -32,7 +32,11 @@ The [Jev / Luna public report](testing/2026-10-07-luna-decisions/public-results.
 
 Counts describe particular executed test sets, not a live badge, total unique-case count, or accuracy rate. Real-model replies vary. Tests and traces distinguish an approval from an executed effect; a model's final narrative is not execution evidence.
 
+Rows above that name the `0.8` omission threshold describe runs made while that was the default; the current default is `0.7` for both log-admission branches. An enabled profile that never set `omitProbability` explicitly adopts the new default after upgrading. To keep the previous behaviour, set `omitProbability: 0.8` explicitly; the feature switches stay independent and off by default.
+
 以上数量是特定已执行集合，不是持续集成徽章、全部去重用例数或准确率。真实模型答案可变化；批准与实际执行分别记录，模型最终自述不能替代操作证据。
+
+上表中出现 `0.8` 门槛的行，记录的是当时仍以该值为默认的测试；现在两个日志准入分支的默认门槛都是 `0.7`。已启用日志准入、但从未显式设置 `omitProbability` 的 profile，升级后会采用新默认值；如需保留旧行为，请显式设置 `omitProbability: 0.8`。功能开关仍互相独立且默认关闭。
 
 Workspace approval has a checked-in [QA case guide](../packages/jev/tests/workspace-approval-qa.md). Run paid-provider examples only with explicit authorization and a bounded budget; use disposable workspaces and keep service credentials outside Git.
 

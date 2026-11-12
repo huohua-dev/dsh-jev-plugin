@@ -2,7 +2,7 @@
 
 [English](2026-10-17-log-admission-threshold.md) | 简体中文
 
-日志准入的默认 `omitProbability` 为 **0.7**，通用日志和测试日志共用该值。显式配置的值继续生效；例如，已保存的 `0.8` 不会被覆盖。两个功能仍默认关闭，4 秒等待和至少 300 码点、10% 的净节省要求保持不变。[配置与采纳实现](../../packages/jev/src/output-admission.ts#L25)使用 `probabilities.omit`，仅在该字段缺失时使用 `confidence`；答案还必须选择 `omit`。
+日志准入的默认 `omitProbability` 为 **0.7**，通用日志和测试日志共用该值。显式配置的值继续生效；例如，已保存的 `0.8` 不会被覆盖。两个功能仍默认关闭，4 秒等待和至少 300 码点、10% 的净节省要求保持不变。[配置与采纳实现](../../packages/jev/src/output-admission.ts#L26)使用 `probabilities.omit`，仅在该字段缺失时使用 `confidence`；答案还必须选择 `omit`。
 
 ## 真实项目日志比较
 

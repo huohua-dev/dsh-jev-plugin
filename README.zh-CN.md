@@ -1,6 +1,6 @@
 # deepseek-harness-jev
 
-> **安全修复已合入 main：**本 fork 保留 DSH 0.2.1-rc.2 基线和原有 MCP 筛选，修复已知依赖漏洞，回移阶段参数脱敏、当前目录与 PTC 审批修复；暂缓新版宿主升级。全量上游审查由标签 `archive/upstream-review-20261106` 保留。详见[安全报告](docs/reviews/2026-11-06-preserve-mcp-security.md)。下方安装地址指向历史上游版本，不是本 fork。
+> **安全修复已合入 main：**本 fork 保留 DSH 0.2.1-rc.2 基线和原有 MCP 筛选，修复已知依赖漏洞，回移阶段参数脱敏、当前目录与 PTC 审批修复；暂缓新版宿主升级。全量上游审查由标签 `archive/upstream-review-20261106` 保留。详见[安全报告](docs/reviews/2026-11-06-preserve-mcp-security.md)。2026-11-12 从上游较新的 19 个提交中选择性合入 5 个，取舍依据见[评审记录](docs/reviews/2026-11-12-upstream-selective-merge.md)。下方安装地址指向历史上游版本，不是本 fork。
 
 > **DSH 0.2.2：**自 0.2.2-alpha.2 起，工具声明改由宿主执行器持有并在提示 waterfall 之后附加，**MCP 筛选在这类宿主上保持不可用**。本插件更早的构建在这类宿主上每个模型步骤都会以 `Cannot read properties of undefined (reading 'some')` 失败。现在插件可在 DSH 0.2.2-rc.1（首次实际验证的 0.2.2 构建）上安装并运行，详见[报告](docs/testing/2026-11-06-harness-0.2.2-rc.1/README.md)。
 

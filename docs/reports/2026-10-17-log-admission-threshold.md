@@ -2,7 +2,7 @@
 
 English | [简体中文](2026-10-17-log-admission-threshold.zh-CN.md)
 
-The default log-admission `omitProbability` is **0.7**, shared by generic and test logs. Explicit profile values still apply: a saved value of `0.8` is not overwritten. Both features remain off by default. The four-second wait and minimum net savings of 300 code points and 10% are unchanged. The [configuration and adoption implementation](../../packages/jev/src/output-admission.ts#L25) uses `probabilities.omit`, falling back to `confidence` only when that field is absent; the answer must also select `omit`.
+The default log-admission `omitProbability` is **0.7**, shared by generic and test logs. Explicit profile values still apply: a saved value of `0.8` is not overwritten. Both features remain off by default. The four-second wait and minimum net savings of 300 code points and 10% are unchanged. The [configuration and adoption implementation](../../packages/jev/src/output-admission.ts#L26) uses `probabilities.omit`, falling back to `confidence` only when that field is absent; the answer must also select `omit`.
 
 ## Existing project test logs
 
